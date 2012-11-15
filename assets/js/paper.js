@@ -13,7 +13,7 @@
  *
  * All rights reserved.
  *
- * Date: Tue Nov 6 20:37:50 2012 -0800
+ * Date: Wed Nov 14 18:34:27 2012 -0800
  *
  ***
  *
@@ -52,6 +52,9 @@ var Base = new function() {
 		proto = Array.prototype,
 		isArray = Array.isArray = Array.isArray || function(obj) {
 			return toString.call(obj) === '[object Array]';
+		},
+		isObject = function(obj) {
+			return toString.call(obj) === '[object Object]';
 		},
 		slice = proto.slice,
 		forEach = proto.forEach || function(iter, bind) {
@@ -258,6 +261,7 @@ var Base = new function() {
 			define: define,
 			describe: describe,
 			iterator: iterator,
+			isObject: isObject,
 
 			check: function(obj) {
 				return !!(obj || obj === 0);
@@ -287,7 +291,7 @@ this.Base = Base.inject({
 			if (key.charAt(0) != '_') {
 				var type = typeof value;
 				this.push(key + ': ' + (type === 'number'
-						? Base.formatNumber(value)
+						? Base.formatFloat(value)
 						: type === 'string' ? "'" + value + "'" : value));
 			}
 		}, []).join(', ') + ' }';
@@ -414,21 +418,21 @@ this.Base = Base.inject({
 		},
 
 		camelize: function(str) {
-			return str.replace(/-(\w)/g, function(all, chr) {
+			return str.replace(/-(.)/g, function(all, chr) {
 				return chr.toUpperCase();
 			});
 		},
 
 		hyphenate: function(str) {
-			return str.replace(/[a-z][A-Z0-9]|[0-9][a-zA-Z]|[A-Z]{2}[a-z]/g,
-				function(match) {
-					return match.charAt(0) + '-' + match.substring(1);
-				}
-			).toLowerCase();
+			return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 		},
 
-		formatNumber: function(num) {
+		formatFloat: function(num) {
 			return (Math.round(num * 100000) / 100000).toString();
+		},
+
+		toFloat: function(str) {
+			return parseFloat(str, 10);
 		}
 	}
 });
@@ -479,8 +483,9 @@ var Callback = {
 		var handlers = this._handlers && this._handlers[type];
 		if (!handlers)
 			return false;
+		var args = [].slice.call(arguments, 1);
 		Base.each(handlers, function(func) {
-			if (func.call(this, event) === false && event && event.stop)
+			if (func.apply(this, args) === false && event && event.stop)
 				event.stop();
 		}, this);
 		return true;
@@ -532,6 +537,7 @@ var PaperScope = this.PaperScope = Base.extend({
 		this.project = null;
 		this.projects = [];
 		this.tools = [];
+		this.palettes = [];
 		this._id = script && (script.getAttribute('id') || script.src)
 				|| ('paperscope-' + (PaperScope._id++));
 		if (script)
@@ -584,6 +590,8 @@ var PaperScope = this.PaperScope = Base.extend({
 			this.projects[i].remove();
 		for (var i = this.tools.length - 1; i >= 0; i--)
 			this.tools[i].remove();
+		for (var i = this.palettes.length - 1; i >= 0; i--)
+			this.palettes[i].remove();
 	},
 
 	remove: function() {
@@ -654,16 +662,16 @@ var Point = this.Point = Base.extend({
 			if (this._read)
 				this._read = arg0 === null ? 1 : 0;
 		} else {
-			if (typeof arg0.x !== 'undefined') {
-				this.x = arg0.x;
-				this.y = arg0.y;
-			} else if (Array.isArray(arg0)) {
+			if (Array.isArray(arg0)) {
 				this.x = arg0[0];
 				this.y = arg0.length > 1 ? arg0[1] : arg0[0];
-			} else if (typeof arg0.width !== 'undefined') {
+			} else if ('x' in arg0) {
+				this.x = arg0.x;
+				this.y = arg0.y;
+			} else if ('width' in arg0) {
 				this.x = arg0.width;
 				this.y = arg0.height;
-			} else if (typeof arg0.angle !== 'undefined') {
+			} else if ('angle' in arg0) {
 				this.x = arg0.length;
 				this.y = 0;
 				this.setAngle(arg0.angle);
@@ -688,7 +696,7 @@ var Point = this.Point = Base.extend({
 	},
 
 	toString: function() {
-		var format = Base.formatNumber;
+		var format = Base.formatFloat;
 		return '{ x: ' + format(this.x) + ', y: ' + format(this.y) + ' }';
 	},
 
@@ -975,13 +983,13 @@ var Size = this.Size = Base.extend({
 			if (this._read)
 				this._read = arg0 === null ? 1 : 0;
 		} else {
-			if (typeof arg0.width !== 'undefined') {
-				this.width = arg0.width;
-				this.height = arg0.height;
-			} else if (Array.isArray(arg0)) {
+			if (Array.isArray(arg0)) {
 				this.width = arg0[0];
 				this.height = arg0.length > 1 ? arg0[1] : arg0[0];
-			} else if (typeof arg0.x !== 'undefined') {
+			} else if ('width' in arg0) {
+				this.width = arg0.width;
+				this.height = arg0.height;
+			} else if ('x' in arg0) {
 				this.width = arg0.x;
 				this.height = arg0.y;
 			} else {
@@ -995,7 +1003,7 @@ var Size = this.Size = Base.extend({
 	},
 
 	toString: function() {
-		var format = Base.formatNumber;
+		var format = Base.formatFloat;
 		return '{ width: ' + format(this.width)
 				+ ', height: ' + format(this.height) + ' }';
 	},
@@ -1140,7 +1148,7 @@ var Rectangle = this.Rectangle = Base.extend({
 			this.x = this.y = this.width = this.height = 0;
 			if (this._read)
 				this._read = arg0 === null ? 1 : 0;
-		} else if (arguments.length > 1 && typeof arg0.width === 'undefined') {
+		} else if (arguments.length > 1 && !('width' in arg0)) {
 			var point = Point.read(arguments),
 				next = Base.peekValue(arguments);
 			this.x = point.x;
@@ -1164,11 +1172,18 @@ var Rectangle = this.Rectangle = Base.extend({
 			}
 			if (this._read)
 				this._read = arguments._index;
-		} else if (arg0) {
-			this.x = arg0.x || 0;
-			this.y = arg0.y || 0;
-			this.width = arg0.width || 0;
-			this.height = arg0.height || 0;
+		} else {
+			if (Array.isArray(arg0)) {
+				this.x = arg0[0];
+				this.y = arg0[1];
+				this.width = arg0[2];
+				this.height = arg0[3];
+			} else {
+				this.x = arg0.x || 0;
+				this.y = arg0.y || 0;
+				this.width = arg0.width || 0;
+				this.height = arg0.height || 0;
+			}
 			if (this._read)
 				this._read = 1;
 		}
@@ -1283,7 +1298,7 @@ var Rectangle = this.Rectangle = Base.extend({
 	},
 
 	toString: function() {
-		var format = Base.formatNumber;
+		var format = Base.formatFloat;
 		return '{ x: ' + format(this.x)
 				+ ', y: ' + format(this.y)
 				+ ', width: ' + format(this.width)
@@ -1537,7 +1552,7 @@ var Matrix = this.Matrix = Base.extend({
 	},
 
 	toString: function() {
-		var format = Base.formatNumber;
+		var format = Base.formatFloat;
 		return '[[' + [format(this._a), format(this._b),
 					format(this._tx)].join(', ') + '], ['
 				+ [format(this._c), format(this._d),
@@ -4225,9 +4240,9 @@ CurveLocation = Base.extend({
 			parts.push('index: ' + index);
 		var parameter = this.getParameter();
 		if (parameter != null)
-			parts.push('parameter: ' + Base.formatNumber(parameter));
+			parts.push('parameter: ' + Base.formatFloat(parameter));
 		if (this._distance != null)
-			parts.push('distance: ' + Base.formatNumber(this._distance));
+			parts.push('distance: ' + Base.formatFloat(this._distance));
 		return '{ ' + parts.join(', ') + ' }';
 	}
 });
@@ -6045,17 +6060,17 @@ var SvgStyles = Base.each({
 
 new function() {
 
-	var formatNumber = Base.formatNumber;
+	var formatFloat = Base.formatFloat;
 
 	function formatPoint(point) {
-		return formatNumber(point.x) + ',' + formatNumber(point.y);
+		return formatFloat(point.x) + ',' + formatFloat(point.y);
 	}
 
 	function setAttributes(svg, attrs) {
 		for (var key in attrs) {
 			var val = attrs[key];
 			if (typeof val === 'number')
-				val = formatNumber(val);
+				val = formatFloat(val);
 			svg.setAttribute(key, val);
 		}
 		return svg;
@@ -6084,7 +6099,7 @@ new function() {
 			scale = matrix.getScaling();
 		if (angle != null) {
 			transform.push(angle
-					? 'rotate(' + formatNumber(angle) + ')'
+					? 'rotate(' + formatFloat(angle) + ')'
 					: 'scale(' + formatPoint(scale) +')');
 		} else {
 			transform.push('matrix(' + matrix.getValues().join(',') + ')');
@@ -6293,7 +6308,7 @@ new function() {
 			break;
 		}
 		if (angle) {
-			attrs.transform = 'rotate(' + formatNumber(angle) + ','
+			attrs.transform = 'rotate(' + formatFloat(angle) + ','
 					+ formatPoint(center) + ')';
 		}
 		var svg = createElement(type, attrs);
@@ -6326,7 +6341,7 @@ new function() {
 						: entry.type === 'array'
 							? value.join(',')
 							: entry.type === 'number'
-								? formatNumber(value)
+								? formatFloat(value)
 								: value;
 			}
 		});
@@ -6361,19 +6376,46 @@ new function() {
 
 new function() {
 
-	function getValue(svg, key, index) {
-		var base = svg[key].baseVal;
-		return index !== undefined
-				? index < base.numberOfItems ? base.getItem(index).value || 0 : 0
-				: base.value || 0;
+	function getValue(svg, key, allowNull, index) {
+		var base = (!allowNull || svg.getAttribute(key) != null)
+				&& svg[key] && svg[key].baseVal;
+		return base
+				? index !== undefined
+					? index < base.numberOfItems
+						? Base.pick((base = base.getItem(index)).value, base)
+						: null
+					: Base.pick(base.value, base)
+				: null;
 	}
 
-	function getPoint(svg, x, y, index) {
-		return Point.create(getValue(svg, x, index), getValue(svg, y, index));
+	function getPoint(svg, x, y, allowNull, index) {
+		x = getValue(svg, x, allowNull, index);
+		y = getValue(svg, y, allowNull, index);
+		return allowNull && x == null && y == null ? null
+				: Point.create(x || 0, y || 0);
 	}
 
-	function getSize(svg, w, h, index) {
-		return Size.create(getValue(svg, w, index), getValue(svg, h, index));
+	function getSize(svg, w, h, allowNull, index) {
+		w = getValue(svg, w, allowNull, index);
+		h = getValue(svg, h, allowNull, index);
+		return allowNull && w == null && h == null ? null
+				: Size.create(w || 0, h || 0);
+	}
+
+	function convertValue(value, type) {
+		return value === 'none'
+				? null
+				: type === 'number'
+					? Base.toFloat(value)
+					: type === 'array'
+						? value.split(/[\s,]+/g).map(parseFloat)
+						: type === 'color' && getDefinition(value)
+							|| value;
+	}
+
+	function createClipGroup(item, clip) {
+		clip.setClipMask(true);
+		return new Group(clip, item);
 	}
 
 	function importGroup(svg, type) {
@@ -6388,10 +6430,15 @@ new function() {
 				if (compound && item instanceof CompoundPath) {
 					group.addChildren(item.removeChildren());
 					item.remove();
-				} else {
+				} else if (!(item instanceof Symbol)) {
 					group.addChild(item);
 				}
 			}
+		}
+
+		if (type == 'defs') {
+			group.remove();
+			group = null;
 		}
 		return group;
 	}
@@ -6504,10 +6551,35 @@ new function() {
 		return compoundPath || path;
 	}
 
+	function importGradient(svg, type) {
+		var nodes = svg.childNodes,
+			stops = [];
+		for (var i = 0, l = nodes.length; i < l; i++) {
+			var node = nodes[i];
+			if (node.nodeType == 1)
+				stops.push(applyAttributes(new GradientStop(), node));
+		}
+		var gradient = new Gradient(stops),
+			isRadial = type == 'radialgradient',
+			origin, destination, highlight;
+		if (isRadial) {
+			gradient.type = 'radial';
+			origin = getPoint(svg, 'cx', 'cy');
+			destination = origin.add(getValue(svg, 'r'), 0);
+			highlight = getPoint(svg, 'fx', 'fy', true);
+		} else {
+			origin = getPoint(svg, 'x1', 'y1');
+			destination = getPoint(svg, 'x2', 'y2');
+		}
+		applyAttributes(
+			new GradientColor(gradient, origin, destination, highlight), svg);
+		return null;
+	}
+
 	var definitions = {};
 	function getDefinition(value) {
-		var match = value.match(/#([^)']+)/);
-        return definitions[match ? match[1] : value];
+		var match = value.match(/\(#([^)']+)/);
+        return match && definitions[match[1]];
 	}
 
 	var importers = {
@@ -6522,19 +6594,32 @@ new function() {
 		polyline: importPoly,
 		// http://www.w3.org/TR/SVG/paths.html
 		path: importPath,
+		// http://www.w3.org/TR/SVG/pservers.html#LinearGradients
+		lineargradient: importGradient,
+		// http://www.w3.org/TR/SVG/pservers.html#RadialGradients
+		radialgradient: importGradient,
 
 		// http://www.w3.org/TR/SVG/struct.html#SymbolElement
 		symbol: function(svg, type) {
-			var item = importGroup(svg, type);
-			item = applyAttributes(item, svg);
-			// TODO: We're returning a symbol. How to handle this?
-			return new Symbol(item);
+			return new Symbol(applyAttributes(importGroup(svg, type), svg));
 		},
 
-		defs: function(svg, type) {
-			var group = importGroup(svg, type);
-			group.remove();
-			return null;
+		// http://www.w3.org/TR/SVG/struct.html#DefsElement
+		defs: importGroup,
+
+		// http://www.w3.org/TR/SVG/struct.html#UseElement
+		use: function(svg, type) {
+			// Note the namespaced xlink:href attribute is just called href
+			// as a property on svg.
+			// TODO: Should getValue become namespace aware?
+			var id = (getValue(svg, 'href') || '').substring(1),
+				definition = definitions[id];
+			// Use place if we're dealing with a symbol:
+			return definition
+					? definition instanceof Symbol
+						? definition.place()
+						: definition.clone()
+					: null;
 		},
 
 		circle: function(svg) {
@@ -6562,9 +6647,9 @@ new function() {
 		},
 
 		text: function(svg) {
-			var text = new PointText(getPoint(svg, 'x', 'y', 0)
-					.add(getPoint(svg, 'dx', 'dy', 0)));
-			text.content = svg.textContent || '';
+			var text = new PointText(getPoint(svg, 'x', 'y', false, 0)
+					.add(getPoint(svg, 'dx', 'dy', false, 0)));
+			text.setContent(svg.textContent || '');
 			return text;
 		}
 	};
@@ -6586,32 +6671,30 @@ new function() {
 			return item;
 		var entry = SvgStyles.attributes[name];
 		if (entry) {
-			item._style[entry.set](value === 'none'
-				? null
-				: entry.type === 'number'
-					? parseFloat(value, 10)
-					: entry.type === 'array'
-						? value.split(/[\s,]+/g).map(parseFloat)
-						: value);
+			item._style[entry.set](convertValue(value, entry.type));
 		} else {
 			switch (name) {
 			case 'id':
 				definitions[value] = item;
-				item.setName(value);
+				if (item.setName)
+					item.setName(value);
 				break;
 			case 'clip-path':
-				var clipPath = getDefinition(value).clone().flatten(),
-					group = new Group(clipPath);
-				group.moveAbove(item);
-				group.addChild(item);
-				group.setClipped(true);
-				item = group; 
+				var clipPath = getDefinition(value).clone().flatten();
+				item = createClipGroup(item, clipPath);
 				break;
+			case 'gradientTransform':
 			case 'transform':
-				applyTransform(item, svg);
+				applyTransform(item, svg, name);
 				break;
+			case 'stop-opacity':
 			case 'opacity':
-				item.setOpacity(parseFloat(value, 10));
+				var opacity = Base.toFloat(value);
+				if (name === 'stop-opacity') {
+					item.color.setAlpha(opacity);
+				} else {
+					item.setOpacity(opacity);
+				}
 				break;
 			case 'visibility':
 				item.setVisible(value === 'visible');
@@ -6622,7 +6705,27 @@ new function() {
 			case 'text-anchor':
 				applyTextAttribute(item, svg, name, value);
 				break;
-			default:
+			case 'stop-color':
+				item.setColor(value);
+				break;
+			case 'offset':
+				var percentage = value.match(/(.*)%$/);
+				item.setRampPoint(percentage ? percentage[1] / 100 : value);
+				break;
+			case 'viewBox':
+				if (item instanceof Symbol)
+					break;
+				var values = convertValue(value, 'array'),
+					rectangle = Rectangle.create.apply(this, values),
+					size = getSize(svg, 'width', 'height', true),
+					scale = size ? rectangle.getSize().divide(size) : 1,
+					offset = rectangle.getPoint(),
+					matrix = new Matrix().translate(offset).scale(scale);
+				item.transform(matrix.createInverse());
+				if (size)
+					rectangle.setSize(size);
+				rectangle.setPoint(0);
+				item = createClipGroup(item, new Path.Rectangle(rectangle));
 				break;
 			}
 		}
@@ -6644,7 +6747,7 @@ new function() {
 				item.setFont(value.split(',')[0].replace(/^\s+|\s+$/g, ''));
 				break;
 			case 'font-size':
-				item.setFontSize(parseFloat(value, 10));
+				item.setFontSize(Base.toFloat(value));
 				break;
 			case 'text-anchor':
 				item.setJustification({
@@ -6662,8 +6765,9 @@ new function() {
 		}
 	}
 
-	function applyTransform(item, svg) {
-		var transforms = svg.transform.baseVal,
+	function applyTransform(item, svg, name) {
+		var svgTransform = svg[name],
+			transforms = svgTransform.baseVal,
 			matrix = new Matrix();
 		for (var i = 0, l = transforms.numberOfItems; i < l; i++) {
 			var transform = transforms.getItem(i);
@@ -6700,8 +6804,8 @@ new function() {
 
 	function importSvg(svg) {
 		var type = svg.nodeName.toLowerCase(),
-			importer = importers[type];
-		var item = importer && importer(svg, type);
+			importer = importers[type],
+			item = importer && importer(svg, type);
 		return item ? applyAttributes(item, svg) : item;
 	}
 
@@ -7191,7 +7295,7 @@ var Color = this.Color = Base.extend(new function() {
 
 	toString: function() {
 		var parts = [],
-			format = Base.formatNumber;
+			format = Base.formatFloat;
 		for (var i = 0, l = this._components.length; i < l; i++) {
 			var component = this._components[i],
 				value = this['_' + component];
@@ -7405,15 +7509,17 @@ var Gradient = this.Gradient = Base.extend({
 
 var GradientStop = this.GradientStop = Base.extend({
 	initialize: function(arg0, arg1) {
-		if (arg1 === undefined && Array.isArray(arg0)) {
-			this.setColor(arg0[0]);
-			this.setRampPoint(arg0[1]);
-		} else if (arg0.color) {
-			this.setColor(arg0.color);
-			this.setRampPoint(arg0.rampPoint);
-		} else {
-			this.setColor(arg0);
-			this.setRampPoint(arg1);
+		if (arg0) {
+			if (arg1 === undefined && Array.isArray(arg0)) {
+				this.setColor(arg0[0]);
+				this.setRampPoint(arg0[1]);
+			} else if (arg0 && arg0.color) {
+				this.setColor(arg0.color);
+				this.setRampPoint(arg0.rampPoint);
+			} else {
+				this.setColor(arg0);
+				this.setRampPoint(arg1);
+			}
 		}
 	},
 
@@ -7455,61 +7561,163 @@ var GradientStop = this.GradientStop = Base.extend({
 	}
 });
 
-var DomElement = {
-	getBounds: function(el, viewport) {
-		var rect = el.getBoundingClientRect(),
-			doc = el.ownerDocument,
-			body = doc.body,
-			docEl = doc.documentElement,
-			x = rect.left - (docEl.clientLeft || body.clientLeft || 0),
-			y = rect.top - (docEl.clientTop  || body.clientTop  || 0);
-		if (!viewport) {
-			var win = DomElement.getViewport(doc);
-			x += win.pageXOffset || docEl.scrollLeft || body.scrollLeft;
-			y += win.pageYOffset || docEl.scrollTop || body.scrollTop;
+var DomElement = new function() {
+
+	var special = /^(checked|value|selected|disabled)$/i,
+		translated = { text: 'textContent', html: 'innerHTML' },
+		unitless = { lineHeight: 1, zoom: 1, zIndex: 1, opacity: 1 };
+
+	function create(nodes, parent) {
+		var res = [];
+		for (var i =  0, l = nodes && nodes.length; i < l;) {
+			var el = nodes[i++];
+			if (typeof el === 'string') {
+				el = document.createElement(el);
+			} else if (!el || !el.nodeType) {
+				continue;
+			}
+			if (Base.isObject(nodes[i]))
+				DomElement.set(el, nodes[i++]);
+			if (Array.isArray(nodes[i]))
+				create(nodes[i++], el);
+			if (parent)
+				parent.appendChild(el);
+			res.push(el);
 		}
-		return new Rectangle(x, y, rect.width, rect.height);
-	},
-
-	getOffset: function(el, viewport) {
-		return this.getBounds(el, viewport).getPoint();
-	},
-
-	getSize: function(el) {
-		return this.getBounds(el, true).getSize();
-	},
-
-	isInvisible: function(el) {
-		return this.getSize(el).equals([0, 0]);
-	},
-
-	isVisible: function(el) {
-		return !this.isInvisible(el) && this.getViewportBounds(el).intersects(
-				this.getBounds(el, true));
-	},
-
-	getViewport: function(doc) {
-		return doc.defaultView || doc.parentWindow;
-	},
-
-	getViewportBounds: function(el) {
-		var doc = el.ownerDocument,
-			view = this.getViewport(doc),
-			body = doc.getElementsByTagName(
-				doc.compatMode === 'CSS1Compat' ? 'html' : 'body')[0];
-		return Rectangle.create(0, 0, 
-			view.innerWidth || body.clientWidth,
-			view.innerHeight || body.clientHeight
-		);
-	},
-
-	getComputedStyle: function(el, name) {
-		if (el.currentStyle)
-			return el.currentStyle[Base.camelize(name)];
-		var style = this.getViewport(el.ownerDocument)
-				.getComputedStyle(el, null);
-		return style ? style.getPropertyValue(Base.hyphenate(name)) : null;
+		return res;
 	}
+
+	return {
+		create: function(nodes, parent) {
+			var isArray = Array.isArray(nodes),
+				res = create(isArray ? nodes : arguments, isArray ? parent : null);
+			return res.length == 1 ? res[0] : res;
+		},
+
+		find: function(selector, root) {
+			return (root || document).querySelector(selector);
+		},
+
+		findAll: function(selector, root) {
+			return (root || document).querySelectorAll(selector);
+		},
+
+		get: function(el, key) {
+			return el
+				? special.test(key)
+					? key === 'value' || typeof el[key] !== 'string'
+						? el[key]
+						: true
+					: key in translated
+						? el[translated[key]]
+						: el.getAttribute(key)
+				: null;
+		},
+
+		set: function(el, key, value) {
+			if (typeof key !== 'string') {
+				for (var name in key)
+					if (key.hasOwnProperty(name))
+						this.set(el, name, key[name]);
+			} else if (!el || value === undefined) {
+				return el;
+			} else if (special.test(key)) {
+				el[key] = value;
+			} else if (key in translated) {
+				el[translated[key]] = value;
+			} else if (key === 'style') {
+				this.setStyle(el, value);
+			} else if (key === 'events') {
+				DomEvent.add(el, value);
+			} else {
+				el.setAttribute(key, value);
+			}
+			return el;
+		},
+
+		getStyle: function(el, key) {
+			var style = el.ownerDocument.defaultView.getComputedStyle(el, '');
+			return el.style[key] || style && style[key] || null;
+		},
+
+		setStyle: function(el, key, value) {
+			if (typeof key !== 'string') {
+				for (var name in key)
+					if (key.hasOwnProperty(name))
+						this.setStyle(el, name, key[name]);
+			} else {
+				if (/^-?[\d\.]+$/.test(value) && !(key in unitless))
+					value += 'px';
+				el.style[key] = value;
+			}
+			return el;
+		},
+
+		hasClass: function(el, cls) {
+			return new RegExp('\\s*' + cls + '\\s*').test(el.className);
+		},
+
+		addClass: function(el, cls) {
+			el.className = (el.className + ' ' + cls).trim();
+		},
+
+		removeClass: function(el, cls) {
+			el.className = el.className.replace(
+				new RegExp('\\s*' + cls + '\\s*'), ' ').trim();
+		},
+
+		remove: function(el) {
+			if (el.parentNode)
+				el.parentNode.removeChild(el);
+		},
+
+		removeChildren: function(el) {
+			while (el.firstChild)
+				el.removeChild(el.firstChild);
+		},
+
+		getBounds: function(el, viewport) {
+			var rect = el.getBoundingClientRect(),
+				doc = el.ownerDocument,
+				body = doc.body,
+				html = doc.documentElement,
+				x = rect.left - (html.clientLeft || body.clientLeft || 0),
+				y = rect.top - (html.clientTop  || body.clientTop  || 0);
+			if (!viewport) {
+				var view = doc.defaultView;
+				x += view.pageXOffset || html.scrollLeft || body.scrollLeft;
+				y += view.pageYOffset || html.scrollTop || body.scrollTop;
+			}
+			return new Rectangle(x, y, rect.width, rect.height);
+		},
+
+		getViewportBounds: function(el) {
+			var doc = el.ownerDocument,
+				view = doc.defaultView,
+				html = doc.documentElement;
+			return Rectangle.create(0, 0, 
+				view.innerWidth || html.clientWidth,
+				view.innerHeight || html.clientHeight
+			);
+		},
+
+		getOffset: function(el, viewport) {
+			return this.getBounds(el, viewport).getPoint();
+		},
+
+		getSize: function(el) {
+			return this.getBounds(el, true).getSize();
+		},
+
+		isInvisible: function(el) {
+			return this.getSize(el).equals([0, 0]);
+		},
+
+		isInView: function(el) {
+			return !this.isInvisible(el) && this.getViewportBounds(el).intersects(
+					this.getBounds(el, true));
+		}
+	};
 };
 
 var DomEvent = {
@@ -7587,7 +7795,7 @@ DomEvent.requestAnimationFrame = new function() {
 			|| window['msR' + part];
 	if (request) {
 		request(function(time) {
-			if (time == undefined)
+			if (time == null)
 				request = null;
 		});
 	}
@@ -7611,13 +7819,13 @@ DomEvent.requestAnimationFrame = new function() {
 		callbacks.push([callback, element]);
 		if (timer)
 			return;
-		timer = window.setInterval(function() {
+		timer = setInterval(function() {
 			for (var i = callbacks.length - 1; i >= 0; i--) {
 				var entry = callbacks[i],
 					func = entry[0],
 					el = entry[1];
 				if (!el || (PaperScript.getAttribute(el, 'keepalive') == 'true'
-						|| focused) && DomElement.isVisible(el)) {
+						|| focused) && DomElement.isInView(el)) {
 					callbacks.splice(i, 1);
 					func(Date.now());
 				}
@@ -7807,7 +8015,7 @@ var View = this.View = Base.extend(Callback, {
 	},
 
 	isVisible: function() {
-		return DomElement.isVisible(this._element);
+		return DomElement.isInView(this._element);
 	},
 
 	scrollBy: function(point) {
@@ -8225,6 +8433,216 @@ var MouseEvent = this.MouseEvent = Event.extend({
 				+ (this.delta ? ', delta: ' + this.delta : '')
 				+ ', modifiers: ' + this.getModifiers()
 				+ ' }';
+	}
+});
+
+var Palette = this.Palette = Base.extend(Callback, {
+	_events: [ 'onChange' ],
+
+	initialize: function(title, components, values) {
+		var parent = DomElement.find('.palettejs-panel')
+			|| DomElement.find('body').appendChild(
+				DomElement.create('div', { 'class': 'palettejs-panel' }));
+		this._element = parent.appendChild(
+			DomElement.create('table', { 'class': 'palettejs-pane' })),
+		this._title = title;
+		if (!values)
+			values = {};
+		for (var name in (this._components = components)) {
+			var component = components[name];
+			if (!(component instanceof Component)) {
+				if (component.value == null)
+					component.value = values[name];
+				component.name = name;
+				component = components[name] = new Component(component);
+			}
+			this._element.appendChild(component._element);
+			component._palette = this;
+			if (values[name] === undefined)
+				values[name] = component.value;
+		}
+		this._values = Base.each(values, function(value, name) {
+			var component = components[name];
+			if (component) {
+				Base.define(values, name, {
+					enumerable: true,
+					configurable: true,
+					writable: true,
+					get: function() {
+						return component._value;
+					},
+					set: function(val) {
+						component.setValue(val);
+					}
+				});
+			}
+		});
+		if (window.paper)
+			paper.palettes.push(this);
+	},
+
+	reset: function() {
+		for (var i in this._components)
+			this._components[i].reset();
+	},
+
+	remove: function() {
+		DomElement.remove(this._element);
+	}
+});
+
+var Component = this.Component = Base.extend(Callback, {
+	_events: [ 'onChange', 'onClick' ],
+
+	_types: {
+		'boolean': {
+			type: 'checkbox',
+			value: 'checked'
+		},
+
+		string: {
+			type: 'text'
+		},
+
+		number: {
+			type: 'number',
+			number: true
+		},
+
+		button: {
+			type: 'button'
+		},
+
+		text: {
+			tag: 'div',
+			value: 'text'
+		},
+
+		slider: {
+			type: 'range',
+			number: true
+		},
+
+		list: {
+			tag: 'select',
+
+			options: function() {
+				DomElement.removeChildren(this._inputItem);
+				DomElement.create(Base.each(this._options, function(option) {
+					this.push('option', { value: option, text: option });
+				}, []), this._inputItem);
+			}
+		}
+	},
+
+	initialize: function(obj) {
+		this._type = obj.type in this._types
+			? obj.type
+			: 'options' in obj
+				? 'list'
+				: 'onClick' in obj
+					? 'button'
+					: typeof obj.value;
+		this._info = this._types[this._type] || { type: this._type };
+		var that = this,
+			fireChange = false;
+		this._inputItem = DomElement.create(this._info.tag || 'input', {
+			type: this._info.type,
+			events: {
+				change: function() {
+					that.setValue(
+						DomElement.get(this, that._info.value || 'value'));
+					if (fireChange) {
+						that._palette.fire('change', that, that.name, that._value);
+						that.fire('change', that._value);
+					}
+				},
+				click: function() {
+					that.fire('click');
+				}
+			}
+		});
+		this._element = DomElement.create('tr', [
+			this._labelItem = DomElement.create('td'),
+			'td', [this._inputItem]
+		]);
+		Base.each(obj, function(value, key) {
+			this[key] = value;
+		}, this);
+		this._defaultValue = this._value;
+		fireChange = true;
+	},
+
+	getType: function() {
+		return this._type;
+	},
+
+	getLabel: function() {
+		return this._label;
+	},
+
+	setLabel: function(label) {
+		this._label = label;
+		DomElement.set(this._labelItem, 'text', label + ':');
+	},
+
+	getOptions: function() {
+		return this._options;
+	},
+
+	setOptions: function(options) {
+		this._options = options;
+		if (this._info.options)
+			this._info.options.call(this);
+	},
+
+	getValue: function() {
+		return this._value;
+	},
+
+	setValue: function(value) {
+		var key = this._info.value || 'value';
+		DomElement.set(this._inputItem, key, value);
+		value = DomElement.get(this._inputItem, key);
+		this._value = this._info.number ? Base.toFloat(value) : value;
+	},
+
+	getRange: function() {
+		return [Base.toFloat(DomElement.get(this._inputItem, 'min')),
+				Base.toFloat(DomElement.get(this._inputItem, 'max'))];
+	},
+
+	setRange: function(min, max) {
+		var range = Array.isArray(min) ? min : [min, max];
+		DomElement.set(this._inputItem, { min: range[0], max: range[1] });
+	},
+
+	getMin: function() {
+		return this.getRange()[0];
+	},
+
+	setMin: function(min) {
+		this.setRange(min, this.getMax());
+	},
+
+	getMax: function() {
+		return this.getRange()[1];
+	},
+
+	setMax: function(max) {
+		this.setRange(this.getMin(), max);
+	},
+
+	getStep: function() {
+		return Base.toFloat(DomElement.get(this._inputItem, 'step'));
+	},
+
+	setStep: function(step) {
+		DomElement.set(this._inputItem, 'step', step);
+	},
+
+	reset: function() {
+		this.setValue(this._defaultValue);
 	}
 });
 
@@ -8990,9 +9408,8 @@ var parse_js=new function(){function W(a,b,c){var d=[];for(var e=0;e<a.length;++
 		var xhr = new (window.ActiveXObject || XMLHttpRequest)(
 				'Microsoft.XMLHTTP');
 		xhr.open('GET', url, true);
-		if (xhr.overrideMimeType) {
+		if (xhr.overrideMimeType)
 			xhr.overrideMimeType('text/plain');
-		}
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState === 4) {
 				return evaluate(xhr.responseText, scope);

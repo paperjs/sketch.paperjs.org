@@ -165,7 +165,7 @@ function createPaperScript(element) {
 	function createInspector() {
 		inspectorTool = new paper.Tool();
 		inspectorTool.buttonTitle = '\x26';
-		inspectorTool.buttonClass = 'symbol';
+		inspectorTool.buttonClass = 'tool-symbol';
 		prevSelection = null;
 		inspectorTool.attach({
 			mousedown: function(event) {
@@ -216,7 +216,7 @@ function createPaperScript(element) {
 
 		zoomTool = new paper.Tool();
 		zoomTool.buttonTitle = '\x21';
-		zoomTool.buttonClass = 'symbol';
+		zoomTool.buttonClass = 'tool-symbol';
 		zoomTool.attach({
 			mousedown: function(event) {
 				if (event.modifiers.space)
@@ -264,7 +264,7 @@ function createPaperScript(element) {
 				button = $('<div class="button">' + title + '</div>')
 					.prependTo(tools);
 			if (tool.buttonClass || !tool.buttonTitle)
-				button.addClass(tool.buttonClass || 'symbol');
+				button.addClass(tool.buttonClass || 'tool-symbol');
 			button.click(function() {
 				tool.activate();
 			}).mousedown(function() {
