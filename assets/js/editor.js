@@ -25,7 +25,6 @@ function downloadDataUri(options) {
 
 function createPaperScript(element) {
 	var scriptName = 'paperjs_' + window.location.pathname.match(/\/([^\/]*)$/)[1],
-		script = $('script', element),
 		runButton = $('.button.run', element),
 		canvas = $('canvas', element),
 		showSplit = element.hasClass('split'),
@@ -38,14 +37,12 @@ function createPaperScript(element) {
 		code = localStorage[scriptName] || '',
 		scope;
 
-	script.html(code);
-
 	function showSource(show) {
 		source.modifyClass('hidden', !show);
 		runButton.text(show ? 'Run' : 'Source');
 		if (show && !editor) {
 			editor = ace.edit(source.find('.editor')[0]);
-			editor.setTheme('ace/theme/textmate');
+			editor.setTheme('ace/theme/bootstrap');
 			editor.setValue(code);
 			var session = editor.getSession();
 			session.setMode('ace/mode/javascript');
@@ -65,16 +62,14 @@ function createPaperScript(element) {
 	}
 
 	function runCode() {
-		// Update script to edited version
 		code = editor.getValue();
-		script.html(code);
 		// In order to be able to install our own error handlers first, we are
 		// not relying on automatic script loading, which is disabled by the use
 		// of data-paper-ignore="true". So we need to create a new paperscope
 		// each time.
 		if (scope)
 			scope.remove();
-		scope = new paper.PaperScope(script[0]);
+		scope = new paper.PaperScope();
 		createConsole();
 		// parseInclude() triggers evaluateCode() in the right moment for us.
 		parseInclude();

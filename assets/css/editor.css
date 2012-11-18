@@ -85,7 +85,7 @@ ol {
 .paperscript .buttons {
 	position: absolute;
 	right: 0;
-	z-index: 1;
+	z-index: 100;
 	display: none;
 }
 
@@ -205,17 +205,24 @@ ol {
 
 /* Editor */
 
-.ace_editor { 
+.paperscript .ace_editor { 
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-    /*
 	font-family: Menlo, Consolas, "Vera Mono", monospace;
 	font-size: 12px;
-	line-height: 20px;
-	*/
+	line-height: 16px;
+}
+
+.paperscript .ace_gutter {
+	font-size: 10px;
+	border-right: 1px solid #999;
+}
+
+.paperscript .ace_gutter-cell {
+	padding-left: 10px;
 }
 
 /* Tools */
