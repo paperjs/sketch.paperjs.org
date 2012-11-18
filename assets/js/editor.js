@@ -116,13 +116,21 @@ function createPaperScript(element) {
 
 	// Install an error handler to log the errors in our log too:
 	window.onerror = function(error, url, lineNumber) {
-		var match = error.match(/(.*)Line (\d*):\s*(.*)/i);
+		var columNumber = 0;
+		var match = error.match(/(.*)\s*\((\d*):(\d*)\)/); // Acorn
 		if (match) {
-			error = match[1] + match[3];
+			error = match[1];
 			lineNumber = match[2];
+			columNumber = match[3];
+		} else {
+			match = error.match(/(.*)Line (\d*):\s*(.*)/i); // Esprima
+			if (match) {
+				error = match[1] + match[3];
+				lineNumber = match[2];
+			}
 		}
 		if (lineNumber)
-			editor.gotoLine(lineNumber);
+			editor.gotoLine(lineNumber, columNumber);
 		scope.console.error('Line ' + lineNumber + ': ' + error);
 		paper.view.draw();
 	};
