@@ -52,6 +52,11 @@
                 if (pos === undefined) {
                     return position;
                 } else {
+                    if (pos < this.limit) {
+                        pos = this.limit;
+                    } else if (pos > this[size]() - this.limit) {
+                        pos = this[size]() - this.limit;
+                    }
                     position = pos;
                     var max = splitter[size](),
                         half = Math.round(max / 2);
@@ -91,28 +96,13 @@
                 $('body').css('cursor', 'auto');
             },
             mousemove: function(e) {
-                var offset = this.offset();
-                var x = e[coord] - offset[first];
-                if (x <= this.limit) {
-                    x = this.limit + 1;
-                } else if (x >= this[size]() - this.limit) {
-                    x = this[size]() - this.limit - 1;
-                }
-                if (x > this.limit && x < this[size]() - this.limit) {
-                    this.position(x);
-                    this.find('.splitter_panel').add(this).trigger('splitter.resize');
-                    return false;
-                }
+                this.position(e[coord] - this.offset()[first]);
+                this.find('.splitter_panel').add(this).trigger('splitter.resize');
+                return false;
             }
         });
         this.on('splitter.resize', function() {
-            var pos = self.position();
-            if (pos > self[size]()) {
-                pos = self[size]() - self.limit - 1;
-            } else if (pos < self.limit) {
-                pos = self.limit + 1;
-            }
-            self.position(pos);
+            self.position(self.position());
         });
         // Inital position of splitter
         var m = settings.position.match(/^([0-9]+)(%)?$/),
