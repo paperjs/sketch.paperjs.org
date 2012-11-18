@@ -38,12 +38,6 @@ select, input, textarea {
 	color: #000;
 }
 
-tt, pre {
-	font-family: Menlo, Consolas, "Vera Mono", monospace;
-	font-size: 12px;
-	line-height: 20px;
-}
-
 a {
 	color: #000;
 	text-decoration: none;
@@ -207,6 +201,21 @@ ol {
 .paperscript.split .canvas {
 	border: 0;
 	border-top: 0;
+}
+
+/* Editor */
+
+.ace_editor { 
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    /*
+	font-family: Menlo, Consolas, "Vera Mono", monospace;
+	font-size: 12px;
+	line-height: 20px;
+	*/
 }
 
 /* Tools */

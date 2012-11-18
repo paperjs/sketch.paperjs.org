@@ -23,25 +23,11 @@ function downloadDataUri(options) {
 		+ options.data + '"/></form>').appendTo('body').submit().remove();
 }
 
-function createCodeMirror(place, options, source) {
-	return new CodeMirror(place, $.extend({
-		lineNumbers: true,
-		matchBrackets: true,
-		indentUnit: 4,
-		tabMode: 'shift',
-		value: source.html().replace(/\t/gi, '    ').match(
-			// Remove first & last empty line
-			/^\s*?[\n\r]?([\u0000-\uffff]*?)[\n\r]?\s*?$/)[1]
-	}, options));
-}
-
 function createPaperScript(element) {
 	var scriptName = 'paperjs_' + window.location.pathname.match(/\/([^\/]*)$/)[1],
-		script = $('script', element).orNull(),
-		runButton = $('.button.run', element).orNull();
-	if (!script || !runButton)
-		return;
-	var canvas = $('canvas', element),
+		script = $('script', element),
+		runButton = $('.button.run', element),
+		canvas = $('canvas', element),
 		showSplit = element.hasClass('split'),
 		sourceFirst = element.hasClass('source'),
 		consoleContainer = $('.console', element).orNull(),
@@ -58,11 +44,16 @@ function createPaperScript(element) {
 		source.modifyClass('hidden', !show);
 		runButton.text(show ? 'Run' : 'Source');
 		if (show && !editor) {
-			editor = createCodeMirror(source[0], {
-				onKeyEvent: function(editor) {
-					localStorage[scriptName] = editor.getValue();
-				}
-			}, script);
+			editor = ace.edit(source.find('.editor')[0]);
+			editor.setTheme('ace/theme/textmate');
+			editor.setValue(code);
+			var session = editor.getSession();
+			session.setMode('ace/mode/javascript');
+			session.setUseSoftTabs(true);
+			session.setTabSize(4);
+			session.on('change', function(e) {
+			    localStorage[scriptName] = editor.getValue();
+			});
 		}
 	}
 
@@ -130,6 +121,13 @@ function createPaperScript(element) {
 
 	// Install an error handler to log the errors in our log too:
 	window.onerror = function(error, url, lineNumber) {
+		var match = error.match(/(.*)Line (\d*):\s*(.*)/i);
+		if (match) {
+			error = match[1] + match[3];
+			lineNumber = match[2];
+		}
+		if (lineNumber)
+			editor.gotoLine(lineNumber);
 		scope.console.error('Line ' + lineNumber + ': ' + error);
 		paper.view.draw();
 	};
@@ -297,7 +295,7 @@ function createPaperScript(element) {
 
 	// Refresh editor if parent gets resized
 	$('.editor', element).parents('.split-pane').on('splitter.resize', function() {
-		editor.refresh();
+		editor.resize();
 	});
 
 	canvas.parents('.split-pane').on('splitter.resize', function() {
@@ -318,10 +316,8 @@ function createPaperScript(element) {
 		// resize it in the resize handler, for much smoother redrawing,
 		// since the splitter panes are aligning using right: 0 / bottom: 0.
 		element.width($(window).width()).height($(window).height());
-		if (editor) {
+		if (editor)
 			panes.trigger('splitter.resize');
-			editor.refresh();
-		}
 	}).trigger('resize');
 
 	// Run the script once the window is loaded
