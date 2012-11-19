@@ -31,11 +31,14 @@ function createPaperScript(element) {
 		sourceFirst = element.hasClass('source'),
 		consoleContainer = $('.console', element).orNull(),
 		editor = null,
+		session,
 		tools = $('.tools', element),
 		inspectorInfo = $('.toolbar .info', element),
 		source = $('.source', element),
 		code = localStorage[scriptName] || '',
-		scope;
+		scope,
+		customAnnotations = [],
+		ignoreAnnotation = false;
 
 	function showSource(show) {
 		source.modifyClass('hidden', !show);
@@ -43,15 +46,39 @@ function createPaperScript(element) {
 		if (show && !editor) {
 			editor = ace.edit(source.find('.editor')[0]);
 			editor.setTheme('ace/theme/bootstrap');
-			var session = editor.getSession();
+			session = editor.getSession();
 			session.setValue(code);
 			session.setMode('ace/mode/javascript');
 			session.setUseSoftTabs(true);
 			session.setTabSize(4);
-			session.on('change', function(e) {
+			session.on('change', function() {
 			    localStorage[scriptName] = editor.getValue();
 			});
+			// We need to listen to changes in annotations, since the javascript
+			// worker changes annotations asynchronously, and would get rid of
+			// annotations that we added ourselves (customAnnotations)
+			session.on('changeAnnotation', function() {
+				if (!ignoreAnnotation && customAnnotations.length > 0)
+					addAnnotations(customAnnotations);
+			});
 		}
+	}
+
+	function addAnnotations(list) {
+		ignoreAnnotation = true;
+		session.setAnnotations(session.getAnnotations().concat(list));
+		ignoreAnnotation = false;
+	}
+
+	function removeAnnotations(list) {
+		ignoreAnnotation = true;
+		var annotations = session.getAnnotations();
+		for (var i = list.length - 1; i >= 0; i--) {
+			if (annotations.indexOf(list[i]) !== -1)
+				annotations.splice(i, 1);
+		}
+		session.setAnnotations(annotations);
+		ignoreAnnotation = false;
 	}
 
 	function evaluateCode() {
@@ -62,6 +89,8 @@ function createPaperScript(element) {
 	}
 
 	function runCode() {
+		removeAnnotations(customAnnotations);
+		customAnnotations = [];
 		code = editor.getValue();
 		// In order to be able to install our own error handlers first, we are
 		// not relying on automatic script loading, which is disabled by the use
@@ -129,8 +158,17 @@ function createPaperScript(element) {
 				lineNumber = match[2];
 			}
 		}
-		if (lineNumber)
+		if (lineNumber) {
+			var annotation = { 
+				row: lineNumber - 1, 
+				column: columNumber, 
+				text: error, 
+				type: 'error'
+			};
+			addAnnotations([annotation]);
+			customAnnotations.push(annotation);
 			editor.gotoLine(lineNumber, columNumber);
+		}
 		scope.console.error('Line ' + lineNumber + ': ' + error);
 		paper.view.draw();
 	};
