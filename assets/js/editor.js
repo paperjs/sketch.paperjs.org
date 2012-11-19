@@ -71,12 +71,12 @@ function createPaperScript(element) {
 	}
 
 	function removeAnnotations(list) {
-		ignoreAnnotation = true;
 		var annotations = session.getAnnotations();
-		for (var i = list.length - 1; i >= 0; i--) {
-			if (annotations.indexOf(list[i]) !== -1)
+		for (var i = annotations.length - 1; i >= 0; i--) {
+			if (list.indexOf(annotations[i]) !== -1)
 				annotations.splice(i, 1);
 		}
+		ignoreAnnotation = true;
 		session.setAnnotations(annotations);
 		ignoreAnnotation = false;
 	}
@@ -99,7 +99,7 @@ function createPaperScript(element) {
 		if (scope)
 			scope.remove();
 		scope = new paper.PaperScope();
-		createConsole();
+		setupConsole();
 		// parseInclude() triggers evaluateCode() in the right moment for us.
 		parseInclude();
 	}
@@ -109,7 +109,7 @@ function createPaperScript(element) {
 		consoleContainer = $('<div class="content"/>').appendTo(consoleContainer);
 	}
 
-	function createConsole() {
+	function setupConsole() {
 		if (!consoleContainer)
 			return;
 		// Override the console object with one that logs to our new
