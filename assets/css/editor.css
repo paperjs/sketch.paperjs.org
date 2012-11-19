@@ -222,7 +222,12 @@ ol {
 }
 
 .paperscript .ace_gutter-cell {
-	padding-left: 10px;
+	padding-left: 13px;
+}
+
+.paperscript .ace_gutter-cell.ace_error,
+.paperscript .ace_gutter-cell.ace_warning {
+	background-position: 0 center;
 }
 
 /* Tools */
