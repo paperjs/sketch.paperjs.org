@@ -46,6 +46,8 @@ function createPaperScript(element) {
 		if (show && !editor) {
 			editor = ace.edit(source.find('.editor')[0]);
 			editor.setTheme('ace/theme/bootstrap');
+			editor.setShowInvisibles(false);
+			editor.setDisplayIndentGuides(true);
 			session = editor.getSession();
 			session.setValue(code);
 			session.setMode('ace/mode/javascript');
