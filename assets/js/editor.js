@@ -145,18 +145,15 @@ function createPaperScript(element) {
 
 	// Install an error handler to log the errors in our log too:
 	window.onerror = function(error, url, lineNumber) {
-		var columNumber = 0;
-		var match = error.match(/(.*)\s*\((\d*):(\d*)\)/); // Acorn
-		if (match) {
+		var columNumber = 0,
+			match;
+		if (match = error.match(/(.*)\s*\((\d*):(\d*)\)/)) { // Acorn
 			error = match[1];
 			lineNumber = match[2];
 			columNumber = match[3];
-		} else {
-			match = error.match(/(.*)Line (\d*):\s*(.*)/i); // Esprima
-			if (match) {
-				error = match[1] + match[3];
-				lineNumber = match[2];
-			}
+		} else if (match = error.match(/(.*)Line (\d*):\s*(.*)/i)) { // Esprima
+			error = match[1] + match[3];
+			lineNumber = match[2];
 		}
 		if (lineNumber) {
 			var annotation = { 
