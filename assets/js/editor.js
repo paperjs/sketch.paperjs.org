@@ -116,11 +116,38 @@ function createPaperScript(element) {
 			return;
 		// Override the console object with one that logs to our new
 		// console
+
+		// Use ower own toString function that's smart about how to log things:
+		function toString(arg) {
+			var type = typeof arg;
+			if (arg == null) {
+				return type === 'object' ? 'null' : 'undefined';
+			} else if (type === 'string') {
+				return "'" + arg.replace(/'/g, "\\'") + "'";
+			} else if (type === 'object') {
+				// If the object provides it's own toString, use it, except for
+				// objects and arrays, since we override those.
+				if (arg.toString !== Object.prototype.toString
+					&& arg.toString !== Array.prototype.toString) {
+					return arg.toString();
+				} else if (paper.Base.isObject(arg)) {
+					return '{ ' + paper.Base.each(arg, function(value, key) {
+						this.push(key + ': ' + toString(value));
+					}, []).join(', ') + ' }';
+				} else if (typeof arg.length === 'number') {
+					return '[ ' + paper.Base.each(arg, function(value, index) {
+						this[index] = toString(value);
+					}, []).join(', ') + ' ]';
+				}
+			}
+			return arg.toString();
+		}
+
 		function print(className, args) {
 			$('<div/>')
 				.addClass(className)
 				.text(paper.Base.each(args, function(arg) {
-									this.push(arg + '');
+									this.push(toString(arg));
 								}, []).join(' '))
 				.appendTo(consoleContainer);
 			consoleContainer.scrollTop(consoleContainer.prop('scrollHeight'));
