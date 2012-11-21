@@ -367,7 +367,9 @@ function createPaperScript(element) {
 
 	canvas.parents('.split-pane').on('splitter.resize', function() {
 		var pane = $('.canvas', element);
-		scope.view.setViewSize(pane.width(), pane.height());
+		if (scope.view) {
+			scope.view.setViewSize(pane.width(), pane.height());
+		}
 	});
 
 	function toggleView() {
