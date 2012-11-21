@@ -13,7 +13,7 @@
  *
  * All rights reserved.
  *
- * Date: Sun Nov 18 12:50:17 2012 -0800
+ * Date: Wed Nov 21 12:17:01 2012 -0800
  *
  ***
  *
@@ -548,7 +548,7 @@ var PaperScope = this.PaperScope = Base.extend({
 	version: 0.22,
 
 	getView: function() {
-		return this.project.view;
+		return this.project && this.project.view;
 	},
 
 	getTool: function() {
@@ -2076,7 +2076,9 @@ var Item = this.Item = Base.extend(Callback, {
 						if (!onFrameItems.length)
 							this._project.view.detach('frame', onFrame);
 					}
-				}
+				},
+
+				onLoad: {}
 			});
 	},
 
@@ -3005,8 +3007,27 @@ var Raster = this.Raster = PlacedItem.extend({
 		if (object.getContext) {
 			this.setCanvas(object);
 		} else {
-			if (typeof object === 'string')
-				object = document.getElementById(object);
+			if (typeof object === 'string') {
+				var str = object,
+					that = this;
+				object = document.getElementById(str);
+				if (!object) {
+					object = new Image();
+					object.src = str;
+				}
+				DomEvent.add(object, {
+					load: function() {
+						that.setImage(object);
+						that.fire('load');
+					}
+				});
+				if (object.naturalWidth) {
+					setTimeout(function() {
+						that.fire('load');
+					}, 0);
+				}
+
+			}
 			this.setImage(object);
 		}
 	},
@@ -8647,6 +8668,8 @@ var Component = this.Component = Base.extend(Callback, {
 });
 
 var ToolEvent = this.ToolEvent = Event.extend({
+	_item: null,
+
 	initialize: function(tool, type, event) {
 		this.tool = tool;
 		this.type = type;
@@ -9368,7 +9391,7 @@ var PaperScript = this.PaperScript = new function() {
 					walkAst(value);
 				}
 			}
-			switch (node.type) {
+			switch (node && node.type) {
 			case 'BinaryExpression':
 				if (node.operator in binaryOperators
 						&& node.left.type !== 'Literal') {
