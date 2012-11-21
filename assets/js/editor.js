@@ -119,29 +119,29 @@ function createPaperScript(element) {
 		// console
 
 		// Use ower own toString function that's smart about how to log things:
-		function toString(arg) {
-			var type = typeof arg;
-			if (arg == null) {
+		function toString(obj, asValue) {
+			var type = typeof obj;
+			if (obj == null) {
 				return type === 'object' ? 'null' : 'undefined';
 			} else if (type === 'string') {
-				return "'" + arg.replace(/'/g, "\\'") + "'";
+				return asValue ? obj.replace(/'/g, "\\'") + "'" : obj;
 			} else if (type === 'object') {
 				// If the object provides it's own toString, use it, except for
 				// objects and arrays, since we override those.
-				if (arg.toString !== Object.prototype.toString
-					&& arg.toString !== Array.prototype.toString) {
-					return arg.toString();
-				} else if (paper.Base.isObject(arg)) {
-					return '{ ' + paper.Base.each(arg, function(value, key) {
-						this.push(key + ': ' + toString(value));
+				if (obj.toString !== Object.prototype.toString
+					&& obj.toString !== Array.prototype.toString) {
+					return obj.toString();
+				} else if (paper.Base.isObject(obj)) {
+					return '{ ' + paper.Base.each(obj, function(value, key) {
+						this.push(key + ': ' + toString(value, true));
 					}, []).join(', ') + ' }';
-				} else if (typeof arg.length === 'number') {
-					return '[ ' + paper.Base.each(arg, function(value, index) {
-						this[index] = toString(value);
+				} else if (typeof obj.length === 'number') {
+					return '[ ' + paper.Base.each(obj, function(value, index) {
+						this[index] = toString(value, true);
 					}, []).join(', ') + ' ]';
 				}
 			}
-			return arg.toString();
+			return obj.toString();
 		}
 
 		function print(className, args) {
