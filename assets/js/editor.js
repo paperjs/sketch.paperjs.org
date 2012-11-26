@@ -1,3 +1,4 @@
+(function() {
 // Install some useful jQuery extensions that we use a lot
 
 $.extend($.fn, {
@@ -21,6 +22,20 @@ function downloadDataUri(options) {
 		+ '" style="display:none"><input type="hidden" name="filename" value="'
 		+ options.filename + '"/><input type="hidden" name="data" value="'
 		+ options.data + '"/></form>').appendTo('body').submit().remove();
+}
+
+var isLocal = /^file:/.test(window.location),
+	proxy = 'http://sketch.paperjs.org/lib/proxy.php?mode=native&url=';
+
+if (!isLocal) {
+	// Load external data through proxy, to circumvent cross-domain restrictions
+	paper.Raster.inject({
+		initialize: function(url, pointOrMatrix) {
+			if (/^\w+:\/\//.test(url))
+				url = proxy + escape(url);
+			return this.base(url, pointOrMatrix);
+		}
+	});
 }
 
 function createPaperScript(element) {
@@ -205,14 +220,21 @@ function createPaperScript(element) {
 			request: function(options) {
 				var url = options.url,
 					nop = function() {};
+				if (!isLocal) {
+					// Load external data through proxy, to circumvent
+					// cross-domain restrictions
+					var request = url;
+					if (options.data && /^get|$/i.test(options.method)) {
+						// We need to pass all get values in the url
+						var params = [];
+						for (var key in options.data)
+							params.push(key + '=' + escape(options.data[key]));
+						request += (/\?/.test(url) ? '&' : '?') + params.join('&');
+					}
+					options.url = proxy + escape(request);
+				}
 				return $.ajax($.extend({
-					// See if we can use jsonp, by checking the domain for
-					// services known to support it.
-					dataType: /\.json$/.test(url)
-						? /\b(vimeo\.com|twitter\.com|yahoo\.com|googleapis\.com)\b/.test(url)
-							? 'jsonp'
-							: 'json'
-						: (url.match(/\.(xml|html)$/) || [])[1],
+					dataType: (url.match(/\.(json|xml|html)$/) || [])[1],
 					success: function(data) {
 						(options.onSuccess || nop)(data);
 					},
@@ -456,3 +478,5 @@ $(function() {
 		}
 	});
 });
+
+})();
