@@ -177,6 +177,10 @@ function createPaperScript(element) {
 
 				error: function() {
 					print('line error', arguments);
+				},
+
+				warn: function() {
+					print('line warn', arguments);
 				}
 			}
 		});

@@ -172,6 +172,10 @@ ol {
 	color: #f30;
 }
 
+.paperscript .console .warn {
+	color: #f93;
+}
+
 .paperscript .CodeMirror {
 	margin: 0 !important; /* Override any potential margins again */
 }
