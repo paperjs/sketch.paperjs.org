@@ -134,7 +134,7 @@ function createPaperScript(element) {
 		// console
 
 		// Use ower own toString function that's smart about how to log things:
-		function toString(obj, asValue) {
+		function toString(obj, indent, asValue) {
 			var type = typeof obj;
 			if (obj == null) {
 				return type === 'object' ? 'null' : 'undefined';
@@ -147,12 +147,16 @@ function createPaperScript(element) {
 					&& obj.toString !== Array.prototype.toString) {
 					return obj.toString();
 				} else if (paper.Base.isObject(obj)) {
-					return '{ ' + paper.Base.each(obj, function(value, key) {
-						this.push(key + ': ' + toString(value, true));
-					}, []).join(', ') + ' }';
+					if (indent != null)
+						indent += '  ';
+					return (indent ? '{\n' : '{') + paper.Base.each(obj, function(value, key) {
+						this.push(indent + key + ': ' + toString(value, indent, true));
+					}, []).join(indent != null ? ',\n' : ', ') + (indent
+						? '\n' + indent.substring(0, indent.length - 2) + '}'
+						: ' }');
 				} else if (typeof obj.length === 'number') {
 					return '[ ' + paper.Base.each(obj, function(value, index) {
-						this[index] = toString(value, true);
+						this[index] = toString(value, indent, true);
 					}, []).join(', ') + ' ]';
 				}
 			}
@@ -160,10 +164,10 @@ function createPaperScript(element) {
 		}
 
 		function print(className, args) {
-			$('<div/>')
+			$('<pre/>')
 				.addClass(className)
 				.text(paper.Base.each(args, function(arg) {
-									this.push(toString(arg));
+									this.push(toString(arg, ''));
 								}, []).join(' '))
 				.appendTo(consoleContainer);
 			consoleContainer.scrollTop(consoleContainer.prop('scrollHeight'));

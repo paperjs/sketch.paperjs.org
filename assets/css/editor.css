@@ -155,17 +155,12 @@ ol {
 }
 
 .paperscript .console .line {
-	margin: 0 10px;
-	text-indent: -16px;
-	padding-left: 16px;
+	padding: 2px 10px;
+	margin: 0;
 }
 
-.paperscript .console .line:first-child {
-	margin-top: 10px;
-}
-
-.paperscript .console .line:last-child {
-	margin-bottom: 10px;
+.paperscript .console .line:nth-child(even) {
+	background: white;
 }
 
 .paperscript .console .error {
