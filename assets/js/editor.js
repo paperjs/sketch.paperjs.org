@@ -196,6 +196,11 @@ function createPaperScript(element) {
 		}
 	}
 
+	function updateView() {
+		if (scope.view)
+			scope.view.draw(true);
+	}
+
 	// Install an error handler to log the errors in our log too:
 	window.onerror = function(error, url, lineNumber) {
 		var columNumber = 0,
@@ -220,7 +225,7 @@ function createPaperScript(element) {
 			editor.gotoLine(lineNumber, columNumber);
 		}
 		scope.console.error('Line ' + lineNumber + ': ' + error);
-		paper.view.draw();
+		updateView();
 	};
 
 	function extendScope() {
@@ -251,6 +256,7 @@ function createPaperScript(element) {
 					},
 					complete: function() {
 						(options.onComplete || nop)();
+						updateView();
 					}
 				}, options));
 			}
@@ -351,7 +357,7 @@ function createPaperScript(element) {
 				prevSelection = null;
 				inspectorInfo.addClass('hidden');
 				inspectorInfo.html('');
-				paper.view.draw();
+				updateView();
 			}
 		});
 
