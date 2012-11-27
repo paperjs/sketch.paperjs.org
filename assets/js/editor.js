@@ -253,10 +253,12 @@ function createPaperScript(element) {
 		};
 	}
 
+	var originalConsole = window.console;
+
 	function parseInclude() {
 		var includes = [];
 		// Parse code for includes, and load them synchronously, if present
-		code.replace(/\binclude\(['"]([^)]*)['"]\)/g, function(all, url) {
+		code.replace(/(?:^|[\n\r])include\(['"]([^)]*)['"]\)/g, function(all, url) {
 			includes.push(url);
 		});
 
@@ -268,14 +270,30 @@ function createPaperScript(element) {
 		// Load all includes sequentially, and finally evaluate code, since 
 		// the code will probably be interdependent.
 		function load() {
-			var url = includes.shift();
-			if (url) {
-				$.getScript(url, load);
+			var path = includes.shift();
+			if (path) {
+				var url = /^\/lib\//.test(path) ? path.substring(1) : path;
+				// Switch to the editor console globally so loaded libraries use
+				// our own console too:
+				window.console = scope.console;
+				$.getScript(url, load).fail(function(xhr, error) {
+					scope.console.error('Cannot load ' + path + ': ' + error);
+				});
 			} else {
 				evaluateCode();
 			}
 		}
+		window.console = originalConsole;
+		cleanupLibraries();
 		load();
+	}
+
+	function cleanupLibraries() {
+		// Didn't find a better way for this yet...
+		if (window.soundManager) {
+			$('#' + soundManager.id).remove();
+			delete window.soundManager;
+		}
 	}
 
 	var inspectorTool,
