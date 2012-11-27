@@ -139,7 +139,7 @@ function createPaperScript(element) {
 			if (obj == null) {
 				return type === 'object' ? 'null' : 'undefined';
 			} else if (type === 'string') {
-				return asValue ? obj.replace(/'/g, "\\'") + "'" : obj;
+				return asValue ? "'" + obj.replace(/'/g, "\\'") + "'" : obj;
 			} else if (type === 'object') {
 				// If the object provides it's own toString, use it, except for
 				// objects and arrays, since we override those.
