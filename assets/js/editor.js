@@ -24,16 +24,18 @@ function downloadDataUri(options) {
 		+ options.data + '"/></form>').appendTo('body').submit().remove();
 }
 
-var isLocal = /^file:/.test(window.location),
+var needsProxy = !/^file:/.test(window.location),
 	proxy = 'http://sketch.paperjs.org/lib/proxy.php?mode=native&url=';
 
-if (!isLocal) {
+function getProxyUrl(url) {
+	return !/^\w+:\/\//.test(url) ? url : proxy + escape(url);
+}
+
+if (needsProxy) {
 	// Load external data through proxy, to circumvent cross-domain restrictions
 	paper.Raster.inject({
 		initialize: function(url, pointOrMatrix) {
-			if (/^\w+:\/\//.test(url))
-				url = proxy + escape(url);
-			return this.base(url, pointOrMatrix);
+			return this.base(getProxyUrl(url), pointOrMatrix);
 		}
 	});
 }
@@ -233,18 +235,18 @@ function createPaperScript(element) {
 			request: function(options) {
 				var url = options.url,
 					nop = function() {};
-				if (!isLocal) {
+				if (needsProxy) {
 					// Load external data through proxy, to circumvent
 					// cross-domain restrictions
-					var request = url;
+					var address = url;
 					if (options.data && /^get|$/i.test(options.method)) {
 						// We need to pass all get values in the url
 						var params = [];
 						for (var key in options.data)
 							params.push(key + '=' + escape(options.data[key]));
-						request += (/\?/.test(url) ? '&' : '?') + params.join('&');
+						address += (/\?/.test(url) ? '&' : '?') + params.join('&');
 					}
-					options.url = proxy + escape(request);
+					options.url = getProxyUrl(address);
 				}
 				return $.ajax($.extend({
 					dataType: (url.match(/\.(json|xml|html)$/) || [])[1],
@@ -290,12 +292,26 @@ function createPaperScript(element) {
 					scope.console.error('Cannot load ' + path + ': ' + error);
 				});
 			} else {
+				setupLibraries();
 				evaluateCode();
 			}
 		}
 		window.console = originalConsole;
 		cleanupLibraries();
 		load();
+	}
+
+	function setupLibraries() {
+		// Patch createSound so it's using the proxy
+		if (window.soundManager && needsProxy) {
+			var createSound = soundManager.createSound;
+			soundManager.createSound = function(options, url) {
+				if (url !== undefined)
+					options = { id: options, url: url };
+				options.url = getProxyUrl(options.url);
+				return createSound.call(soundManager, options);
+			};
+		}
 	}
 
 	function cleanupLibraries() {

@@ -139,7 +139,7 @@
 $enable_jsonp    = false;
 $enable_native   = true;
 // Only allow loading of simple resources through this for now
-$valid_url_regex = '/\.(json|js|jpg|jpeg|png|gif)([?&]|$)/';
+$valid_url_regex = '/\.(json|js|jpg|jpeg|png|gif|mp3)([?&]|$)/';
 
 // ############################################################################
 
