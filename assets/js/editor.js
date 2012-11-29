@@ -166,7 +166,7 @@ function createPaperScript(element) {
 		}
 
 		function print(className, args) {
-			$('<pre/>')
+			$('<div/>')
 				.addClass(className)
 				.text(paper.Base.each(args, function(arg) {
 									this.push(toString(arg, ''));
