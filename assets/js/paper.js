@@ -13,7 +13,7 @@
  *
  * All rights reserved.
  *
- * Date: Fri Nov 23 14:06:11 2012 -0800
+ * Date: Wed Nov 28 22:13:31 2012 -0800
  *
  ***
  *
@@ -665,13 +665,13 @@ var Point = this.Point = Base.extend({
 			if (Array.isArray(arg0)) {
 				this.x = arg0[0];
 				this.y = arg0.length > 1 ? arg0[1] : arg0[0];
-			} else if ('x' in arg0) {
+			} else if (arg0.x != null) {
 				this.x = arg0.x;
 				this.y = arg0.y;
-			} else if ('width' in arg0) {
+			} else if (arg0.width != null) {
 				this.x = arg0.width;
 				this.y = arg0.height;
-			} else if ('angle' in arg0) {
+			} else if (arg0.angle != null) {
 				this.x = arg0.length;
 				this.y = 0;
 				this.setAngle(arg0.angle);
@@ -986,10 +986,10 @@ var Size = this.Size = Base.extend({
 			if (Array.isArray(arg0)) {
 				this.width = arg0[0];
 				this.height = arg0.length > 1 ? arg0[1] : arg0[0];
-			} else if ('width' in arg0) {
+			} else if (arg0.width != null) {
 				this.width = arg0.width;
 				this.height = arg0.height;
-			} else if ('x' in arg0) {
+			} else if (arg0.x != null) {
 				this.width = arg0.x;
 				this.height = arg0.y;
 			} else {
@@ -1148,7 +1148,7 @@ var Rectangle = this.Rectangle = Base.extend({
 			this.x = this.y = this.width = this.height = 0;
 			if (this._read)
 				this._read = arg0 === null ? 1 : 0;
-		} else if (arguments.length > 1 && !('width' in arg0)) {
+		} else if (arguments.length > 1 && arg0.width == null) {
 			var point = Point.read(arguments),
 				next = Base.peekValue(arguments);
 			this.x = point.x;
@@ -4742,7 +4742,8 @@ var Path = this.Path = PathItem.extend({
 
 	contains: function(point) {
 		point = Point.read(arguments);
-		if (!this._closed || !this.getRoughBounds()._containsPoint(point))
+		if (!this._closed && !this._style._fillColor
+				|| !this.getRoughBounds()._containsPoint(point))
 			return false;
 		var curves = this.getCurves(),
 			crossings = 0,
@@ -6729,6 +6730,13 @@ new function() {
 					item.setOpacity(opacity);
 				}
 				break;
+			case 'fill-opacity':
+			case 'stroke-opacity':
+				var color = item[name == 'fill-opacity'
+							? 'getFillColor' : 'getStrokeColor']();
+				if (color)
+					color.setAlpha(Base.toFloat(value));
+				break;
 			case 'visibility':
 				item.setVisible(value === 'visible');
 				break;
@@ -7257,6 +7265,10 @@ var Color = this.Color = Base.extend(new function() {
 					}, src);
 				}
 				return this.base(src);
+			},
+
+			random: function() {
+				return new RgbColor(Math.random(), Math.random(), Math.random());
 			}
 		}
 	};
