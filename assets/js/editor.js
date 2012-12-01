@@ -73,31 +73,68 @@ function createPaperScript(element) {
 			session.on('change', function() {
 			    localStorage[scriptName] = editor.getValue();
 			});
+			/*
+			// This does not seem to work yet in Ace, but should soon:
+			session.$worker.send("setOptions", {
+				evil: true,
+				regexdash: true,
+				browser: true,
+				wsh: true,
+				trailing: false,
+				smarttabs: true,
+				sub: true,
+				supernew: true,
+				laxbreak: true,
+				eqeqeq: false,
+				eqnull: true,
+				loopfunc: true,
+				boss: true,
+				shadow: true
+			});
+			*/
 			// We need to listen to changes in annotations, since the javascript
 			// worker changes annotations asynchronously, and would get rid of
 			// annotations that we added ourselves (customAnnotations)
 			session.on('changeAnnotation', function() {
-				if (!ignoreAnnotation && customAnnotations.length > 0)
-					addAnnotations(customAnnotations);
+				if (ignoreAnnotation)
+					return;
+				var annotations = getAnnotations();
+				filterAnnotations(annotations);
+				if (customAnnotations.length > 0)
+					annotations = annotations.concat(customAnnotations);
+				setAnnotations(annotations);
 			});
 		}
 	}
 
-	function addAnnotations(list) {
+	function getAnnotations() {
+		return session.getAnnotations();
+	}
+
+	function setAnnotations(annotations) {
 		ignoreAnnotation = true;
-		session.setAnnotations(session.getAnnotations().concat(list));
+		session.setAnnotations(annotations);
 		ignoreAnnotation = false;
 	}
 
+	function filterAnnotations(annotations) {
+		for (var i = annotations.length - 1; i >= 0; i--) {
+			var text = annotations[i].text;
+			if (/^Use '[=!]=='/.test(text) 
+					|| /is already defined/.test(text)
+					|| /Missing semicolon/.test(text)) {
+				annotations.splice(i, 1);
+			}
+		}
+	}
+
 	function removeAnnotations(list) {
-		var annotations = session.getAnnotations();
+		var annotations = getAnnotations();
 		for (var i = annotations.length - 1; i >= 0; i--) {
 			if (list.indexOf(annotations[i]) !== -1)
 				annotations.splice(i, 1);
 		}
-		ignoreAnnotation = true;
-		session.setAnnotations(annotations);
-		ignoreAnnotation = false;
+		setAnnotations(list);
 	}
 
 	function evaluateCode() {
@@ -222,7 +259,9 @@ function createPaperScript(element) {
 				text: error, 
 				type: 'error'
 			};
-			addAnnotations([annotation]);
+			var annotations = getAnnotations();
+			annotations.push(annotation);
+			setAnnotations(annotations);
 			customAnnotations.push(annotation);
 			editor.gotoLine(lineNumber, columNumber);
 		}
