@@ -13,7 +13,7 @@
  *
  * All rights reserved.
  *
- * Date: Wed Nov 28 22:13:31 2012 -0800
+ * Date: Mon Dec 3 09:53:47 2012 -0800
  *
  ***
  *
@@ -1859,14 +1859,14 @@ var Project = this.Project = PaperScopeItem.extend({
 
 	initialize: function(view) {
 		this.base(true);
-		this._currentStyle = new PathStyle();
-		this._selectedItems = {};
-		this._selectedItemCount = 0;
 		this.layers = [];
 		this.symbols = [];
 		this.activeLayer = new Layer();
 		if (view)
 			this.view = view instanceof View ? view : View.create(view);
+		this._currentStyle = new PathStyle();
+		this._selectedItems = {};
+		this._selectedItemCount = 0;
 	},
 
 	_needsRedraw: function() {
@@ -2054,12 +2054,6 @@ var Item = this.Item = Base.extend(Callback, {
 			}
 		};
 
-		var onFrameItems = [];
-		function onFrame(event) {
-			for (var i = 0, l = onFrameItems.length; i < l; i++)
-				onFrameItems[i].fire('frame', event);
-		}
-
 		return Base.each(['onMouseDown', 'onMouseUp', 'onMouseDrag', 'onClick',
 			'onDoubleClick', 'onMouseMove', 'onMouseEnter', 'onMouseLeave'],
 			function(name) {
@@ -2067,14 +2061,10 @@ var Item = this.Item = Base.extend(Callback, {
 			}, {
 				onFrame: {
 					install: function() {
-						if (!onFrameItems.length)
-							this._project.view.attach('frame', onFrame);
-						onFrameItems.push(this);
+						this._project.view._animateItem(this, true);
 					},
 					uninstall: function() {
-						onFrameItems.splice(onFrameItems.indexOf(this), 1);
-						if (!onFrameItems.length)
-							this._project.view.detach('frame', onFrame);
+						this._project.view._animateItem(this, false);
 					}
 				},
 
@@ -2419,7 +2409,7 @@ function(name) {
 		copy.setStyle(this._style);
 		if (this._children) {
 			for (var i = 0, l = this._children.length; i < l; i++)
-				copy.addChild(this._children[i].clone());
+				copy.addChild(this._children[i].clone(), true);
 		}
 		var keys = ['_locked', '_visible', '_blendMode', '_opacity',
 				'_clipMask', '_guide'];
@@ -2501,8 +2491,8 @@ function(name) {
 		}
 	},
 
-	addChild: function(item) {
-		return this.insertChild(undefined, item);
+	addChild: function(item, _cloning) {
+		return this.insertChild(undefined, item, _cloning);
 	},
 
 	insertChild: function(index, item) {
@@ -2825,8 +2815,8 @@ function(name) {
 			var tempCanvas, parentCtx,
 			 	itemOffset, prevOffset;
 			if (item._blendMode !== 'normal' || item._opacity < 1
-					&& !(item._segments
-						&& (!item.getFillColor() || !item.getStrokeColor()))) {
+					&& (item._type !== 'path'
+						|| item.getFillColor() && item.getStrokeColor())) {
 				var bounds = item.getStrokeBounds();
 				if (!bounds.width || !bounds.height)
 					return;
@@ -3017,25 +3007,18 @@ var Raster = this.Raster = PlacedItem.extend({
 		} else {
 			if (typeof object === 'string') {
 				var str = object,
-					that = this,
-					done = function() {
-						that.fire('load');
-						if (that._project.view)
-							that._project.view.draw(true);
-					};
-				object = document.getElementById(str);
-				if (!object) {
-					object = new Image();
-					object.src = str;
-				}
+					that = this;
+				object = document.getElementById(str) || new Image();
 				DomEvent.add(object, {
 					load: function() {
 						that.setImage(object);
-						done();
+						that.fire('load');
+						if (that._project.view)
+							that._project.view.draw(true);
 					}
 				});
-				if (object.naturalWidth)
-					setTimeout(done, 0);
+				if (!object.src)
+					object.src = str;
 			}
 			this.setImage(object);
 		}
@@ -3056,10 +3039,12 @@ var Raster = this.Raster = PlacedItem.extend({
 	},
 
 	setSize: function() {
-		var size = Size.read(arguments),
-			image = this.getImage();
-		this.setCanvas(CanvasProvider.getCanvas(size));
-		this.getContext(true).drawImage(image, 0, 0, size.width, size.height);
+		var size = Size.read(arguments);
+		if (!this._size.equals(size)) {
+			var image = this.getImage();
+			this.setCanvas(CanvasProvider.getCanvas(size));
+			this.getContext(true).drawImage(image, 0, 0, size.width, size.height);
+		}
 	},
 
 	getWidth: function() {
@@ -4594,8 +4579,8 @@ var Path = this.Path = PathItem.extend({
 	setClockwise: function(clockwise) {
 		if (this.isClockwise() != (clockwise = !!clockwise)) {
 			this.reverse();
-			this._clockwise = clockwise;
 		}
+		this._clockwise = clockwise;
 	},
 
 	reverse: function() {
@@ -5572,11 +5557,11 @@ var CompoundPath = this.CompoundPath = PathItem.extend({
 		this.addChildren(Array.isArray(paths) ? paths : arguments);
 	},
 
-	insertChild: function(index, item) {
-		if (!(item instanceof Path))
+	insertChild: function(index, item, _cloning) {
+		if (item._type !== 'path')
 			return null;
 		var res = this.base(index, item);
-		if (res && item._clockwise === undefined)
+		if (!_cloning && res && item._clockwise === undefined)
 			item.setClockwise(item._index == 0);
 		return res;
 	},
@@ -6368,10 +6353,12 @@ new function() {
 		Base.each(SvgStyles.properties, function(entry) {
 			var value = style[entry.get]();
 			if (!parentStyle || !Base.equals(parentStyle[entry.get](), value)) {
+				if (entry.type === 'color' && value != null && value.getAlpha() < 1)
+					attrs[entry.attribute + '-opacity'] = value.getAlpha();
 				attrs[entry.attribute] = value == null
 					? 'none'
 					: entry.type === 'color'
-						? value.toCssString()
+						? value.toCss(false) 
 						: entry.type === 'array'
 							? value.join(',')
 							: entry.type === 'number'
@@ -6632,6 +6619,19 @@ new function() {
 		lineargradient: importGradient,
 		// http://www.w3.org/TR/SVG/pservers.html#RadialGradients
 		radialgradient: importGradient,
+
+		// http://www.w3.org/TR/SVG/struct.html#ImageElement
+		image: function (svg) {
+			var raster = new Raster(getValue(svg, 'href'));
+			raster.attach('load', function() {
+				var size = getSize(svg, 'width', 'height');
+				this.setSize(size);
+				// Since x and y start from the top left of an image, add
+				// half of its size:
+				this.translate(getPoint(svg, 'x', 'y').add(size.divide(2)));
+			});
+			return raster;
+		},
 
 		// http://www.w3.org/TR/SVG/struct.html#SymbolElement
 		symbol: function(svg, type) {
@@ -7295,7 +7295,7 @@ var Color = this.Color = Base.extend(new function() {
 }, {
 
 	_changed: function() {
-		this._cssString = null;
+		this._css = null;
 		if (this._owner)
 			this._owner._changed(17);
 	},
@@ -7351,23 +7351,25 @@ var Color = this.Color = Base.extend(new function() {
 		return '{ ' + parts.join(', ') + ' }';
 	},
 
-	toCssString: function() {
-		if (!this._cssString) {
+	toCss: function(withAlpha) {
+		if (!this._css) {
 			var color = this.convert('rgb'),
-				alpha = color.getAlpha(),
+				alpha = withAlpha === undefined || withAlpha ? color.getAlpha() : 1,
 				components = [
 					Math.round(color._red * 255),
 					Math.round(color._green * 255),
-					Math.round(color._blue * 255),
-					alpha != null ? alpha : 1
+					Math.round(color._blue * 255)
 				];
-			this._cssString = 'rgba(' + components.join(', ') + ')';
+			if (alpha < 1)
+				components.push(alpha);
+			this._css = (components.length == 4 ? 'rgba(' : 'rgb(')
+					+ components.join(', ') + ')';
 		}
-		return this._cssString;
+		return this._css;
 	},
 
 	getCanvasStyle: function() {
-		return this.toCssString();
+		return this.toCss();
 	}
 
 });
@@ -7462,7 +7464,7 @@ var GradientColor = this.GradientColor = Color.extend({
 		}
 		for (var i = 0, l = this.gradient._stops.length; i < l; i++) {
 			var stop = this.gradient._stops[i];
-			gradient.addColorStop(stop._rampPoint, stop._color.toCssString());
+			gradient.addColorStop(stop._rampPoint, stop._color.toCss());
 		}
 		return gradient;
 	},
@@ -7880,47 +7882,6 @@ DomEvent.requestAnimationFrame = new function() {
 };
 
 var View = this.View = Base.extend(Callback, {
-	_events: {
-		onFrame: {
-			install: function() {
-				var that = this,
-					requested = false,
-					before,
-					time = 0,
-					count = 0;
-				this._onFrameCallback = function(param, dontRequest) {
-					requested = false;
-					if (!that._onFrameCallback)
-						return;
-					paper = that._scope;
-					if (!dontRequest) {
-						requested = true;
-						DomEvent.requestAnimationFrame(that._onFrameCallback,
-								that._element);
-					}
-					var now = Date.now() / 1000,
-						delta = before ? now - before : 0;
-					that.fire('frame', Base.merge({
-						delta: delta,
-						time: time += delta,
-						count: count++
-					}));
-					before = now;
-					if (that._stats)
-						that._stats.update();
-					that.draw(true);
-				};
-				if (!requested)
-					this._onFrameCallback();
-			},
-
-			uninstall: function() {
-				delete this._onFrameCallback;
-			}
-		},
-
-		onResize: {}
-	},
 
 	initialize: function(element) {
 		this._scope = paper;
@@ -7971,6 +7932,7 @@ var View = this.View = Base.extend(Callback, {
 		this._zoom = 1;
 		if (!View._focused)
 			View._focused = this;
+		this._frameItems = [];
 	},
 
 	remove: function() {
@@ -7986,13 +7948,86 @@ var View = this.View = Base.extend(Callback, {
 		DomEvent.remove(window, this._windowHandlers);
 		this._element = this._project = null;
 		this.detach('frame');
+		this._frameItems = [];
 		return true;
+	},
+
+	_events: {
+		onFrame: {
+			install: function() {
+				if (!this._requested) {
+					this._animate = true;
+					this._handleFrame(true);
+				}
+			},
+
+			uninstall: function() {
+				this._animate = false;
+			}
+		},
+
+		onResize: {}
+	},
+
+	_animate: false,
+	_time: 0,
+	_count: 0,
+
+	_handleFrame: function(request) {
+		this._requested = false;
+		if (!this._animate)
+			return;
+		paper = this._scope;
+		if (request) {
+			this._requested = true;
+			var that = this;
+			DomEvent.requestAnimationFrame(function() {
+				that._handleFrame(true);
+			}, this._element);
+		}
+		var now = Date.now() / 1000,
+			delta = this._before ? now - this._before : 0;
+		this._before = now;
+		this.fire('frame', Base.merge({
+			delta: delta,
+			time: this._time += delta,
+			count: this._count++
+		}));
+		if (this._stats)
+			this._stats.update();
+		this.draw(true);
+	},
+
+	_animateItem: function(item, animate) {
+		var items = this._frameItems;
+		if (animate) {
+			if (!items.length)
+				this.attach('frame', this._handleFrameItems);
+			items.push(item);
+		} else {
+			items[items.indexOf(this)] = null;
+			if (items.length == 1) {
+				this.detach('frame', this._handleFrameItems);
+				this._frameItems = [];
+			}
+		}
+	},
+
+	_handleFrameItems: function(event) {
+		var items = this._frameItems;
+		for (var i = 0; i < items.length; i++) {
+			var item = items[i];
+			if (item)
+				item.fire('frame', event);
+			else
+				items.splice(i--, 1);
+		}
 	},
 
 	_redraw: function() {
 		this._redrawNeeded = true;
-		if (this._onFrameCallback) {
-			this._onFrameCallback(0, true);
+		if (this._animate) {
+			this._handleFrame();
 		} else {
 			this.draw();
 		}
