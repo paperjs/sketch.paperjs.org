@@ -55,8 +55,7 @@ function createPaperScript(element) {
 		code = localStorage[scriptName] || '',
 		scope,
 		customAnnotations = [],
-		ignoreAnnotation = false,
-		editing = false;
+		ignoreAnnotation = false;
 
 	function showSource(show) {
 		source.modifyClass('hidden', !show);
@@ -74,11 +73,14 @@ function createPaperScript(element) {
 			session.on('change', function() {
 			    localStorage[scriptName] = editor.getValue();
 			});
-			editor.on('focus', function() {
-				editing = true;
-			});
-			editor.on('blur', function() {
-				editing = false;
+			editor.setKeyboardHandler({
+				handleKeyboard: function(data, hashId, keyString, keyCode, event) {
+					if (event) {
+						if ((event.metaKey || event.ctrlKey) && event.which == 69)
+							$('.paperscript .button.run').trigger('click', event);
+						event.stopPropagation();
+					}
+				}
 			});
 			/*
 			// This does not seem to work yet in Ace, but should soon:
@@ -564,14 +566,6 @@ function createPaperScript(element) {
 $(function() {
 	$('.paperscript').each(function() {
 		createPaperScript($(this));
-	});
-	$(document).keydown(function(event) {
-		if (editing)
-			return false;
-		if ((event.metaKey || event.ctrlKey) && event.which == 69) {
-			$('.paperscript .button.run').trigger('click', event);
-			return false;
-		}
 	});
 });
 
