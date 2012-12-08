@@ -55,7 +55,8 @@ function createPaperScript(element) {
 		code = localStorage[scriptName] || '',
 		scope,
 		customAnnotations = [],
-		ignoreAnnotation = false;
+		ignoreAnnotation = false,
+		editing = false;
 
 	function showSource(show) {
 		source.modifyClass('hidden', !show);
@@ -72,6 +73,12 @@ function createPaperScript(element) {
 			session.setTabSize(4);
 			session.on('change', function() {
 			    localStorage[scriptName] = editor.getValue();
+			});
+			editor.on('focus', function() {
+				editing = true;
+			});
+			editor.on('blur', function() {
+				editing = false;
 			});
 			/*
 			// This does not seem to work yet in Ace, but should soon:
@@ -559,6 +566,8 @@ $(function() {
 		createPaperScript($(this));
 	});
 	$(document).keydown(function(event) {
+		if (editing)
+			return false;
 		if ((event.metaKey || event.ctrlKey) && event.which == 69) {
 			$('.paperscript .button.run').trigger('click', event);
 			return false;
