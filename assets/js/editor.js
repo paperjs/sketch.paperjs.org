@@ -279,7 +279,7 @@ function createPaperScript(element) {
 	};
 
 	function extendScope() {
-		scope.Http = {
+		scope.Http = { 
 			request: function(options) {
 				var url = options.url,
 					nop = function() {};
@@ -378,20 +378,30 @@ function createPaperScript(element) {
 		inspectorTool.buttonTitle = '\x26';
 		inspectorTool.buttonClass = 'tool-symbol';
 		prevSelection = null;
+
+		function deselect() {
+			if (prevSelection) {
+				// prevSelection can be an Item or a Segment
+				var item = prevSelection.path || prevSelection;
+				item.bounds.selected = false;
+				item.selected = false;
+				prevSelection.selected = false;
+				prevSelection = null;
+			}
+		}
+
 		inspectorTool.attach({
 			mousedown: function(event) {
-				if (prevSelection) {
-					prevSelection.selected = false;
-				}
+				deselect();
 				var selection = event.item;
 				if (selection) {
 					var handle = selection.hitTest(event.point, {
 						segments: true,
 						tolerance: 4
 					});
-					if (handle) {
+					selection.bounds.selected = !handle;
+					if (handle)
 						selection = handle.segment;
-					}
 					selection.selected = true;
 				}
 				inspectorInfo.modifyClass('hidden', !selection);
@@ -416,9 +426,7 @@ function createPaperScript(element) {
 			},
 
 			deactivate: function() {
-				if (prevSelection)
-					prevSelection.selected = false;
-				prevSelection = null;
+				deselect();
 				inspectorInfo.addClass('hidden');
 				inspectorInfo.html('');
 				updateView();
