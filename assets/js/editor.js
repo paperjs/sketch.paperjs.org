@@ -433,13 +433,16 @@ function createPaperScript(element) {
 			}
 		});
 
+		var lastPoint;
 		zoomTool = new paper.Tool();
 		zoomTool.buttonTitle = '\x21';
 		zoomTool.buttonClass = 'tool-symbol';
 		zoomTool.attach({
 			mousedown: function(event) {
-				if (event.modifiers.space)
+				if (event.modifiers.space) {
+					lastPoint = paper.view.projectToView(event.point);
 					return;
+				}
 				var factor = 1.25;
 				if (event.modifiers.option)
 					factor = 1 / factor;
@@ -449,7 +452,13 @@ function createPaperScript(element) {
 			},
 			mousedrag: function(event) {
 				if (event.modifiers.space) {
-					paper.view.scrollBy(event.delta.negate());
+					// In order to have coordinate changes not mess up the dragging,
+					// we need to convert coordinates to view space, and then 
+					// back to project space after the view space has changed.
+					var point = paper.view.projectToView(event.point),
+						last = paper.view.viewToProject(lastPoint);
+					paper.view.scrollBy(last.subtract(event.point));
+					lastPoint = point;
 				}
 			},
 			activate: function() {
