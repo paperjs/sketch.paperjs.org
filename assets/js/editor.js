@@ -194,7 +194,7 @@ function createPaperScript(element) {
 				if (obj.toString !== Object.prototype.toString
 					&& obj.toString !== Array.prototype.toString) {
 					return obj.toString();
-				} else if (paper.Base.isObject(obj)) {
+				} else if (paper.Base.isPlainObject(obj)) {
 					if (indent != null)
 						indent += '  ';
 					return (indent ? '{\n' : '{') + paper.Base.each(obj, function(value, key) {
