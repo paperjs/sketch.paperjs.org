@@ -2,10 +2,6 @@
 // Install some useful jQuery extensions that we use a lot
 
 $.extend($.fn, {
-	modifyClass: function(className, add) {
-		return this[add ? 'addClass' : 'removeClass'](className);
-	},
-
 	orNull: function() {
 		return this.length > 0 ? this : null;
 	},
@@ -40,6 +36,8 @@ if (needsProxy) {
 	});
 }
 
+paper.Component.prototype._types.color.type = 'text';
+
 function createPaperScript(element) {
 	var scriptName = 'paperjs_' + window.location.pathname.match(/\/([^\/]*)$/)[1],
 		runButton = $('.button.run', element),
@@ -58,7 +56,7 @@ function createPaperScript(element) {
 		ignoreAnnotation = false;
 
 	function showSource(show) {
-		source.modifyClass('hidden', !show);
+		source.toggleClass('hidden', !show);
 		runButton.text(show ? 'Run' : 'Source');
 		if (show && !editor) {
 			editor = ace.edit(source.find('.editor')[0]);
@@ -131,7 +129,8 @@ function createPaperScript(element) {
 			var text = annotations[i].text;
 			if (/^Use '[=!]=='/.test(text) 
 					|| /is already defined/.test(text)
-					|| /Missing semicolon/.test(text)) {
+					|| /Missing semicolon/.test(text)
+					|| /'debugger' statements/.test(text)) {
 				annotations.splice(i, 1);
 			}
 		}
@@ -143,7 +142,7 @@ function createPaperScript(element) {
 			if (list.indexOf(annotations[i]) !== -1)
 				annotations.splice(i, 1);
 		}
-		setAnnotations(list);
+		setAnnotations(annotations);
 	}
 
 	function evaluateCode() {
@@ -151,6 +150,7 @@ function createPaperScript(element) {
 		scope.evaluate(code);
 		createInspector();
 		setupTools();
+		setupPalettes();
 	}
 
 	function runCode() {
@@ -178,8 +178,7 @@ function createPaperScript(element) {
 	function setupConsole() {
 		if (!consoleContainer)
 			return;
-		// Override the console object with one that logs to our new
-		// console
+		// Override the console object with one that logs to our new console.
 
 		// Use ower own toString function that's smart about how to log things:
 		function toString(obj, indent, asValue) {
@@ -390,7 +389,7 @@ function createPaperScript(element) {
 			}
 		}
 
-		inspectorTool.attach({
+		inspectorTool.on({
 			mousedown: function(event) {
 				deselect();
 				var selection = event.item;
@@ -399,12 +398,14 @@ function createPaperScript(element) {
 						segments: true,
 						tolerance: 4
 					});
+					if (handle && handle.type !== 'segment')
+						handle = null;
 					selection.bounds.selected = !handle;
 					if (handle)
 						selection = handle.segment;
 					selection.selected = true;
 				}
-				inspectorInfo.modifyClass('hidden', !selection);
+				inspectorInfo.toggleClass('hidden', !selection);
 				inspectorInfo.html('');
 				if (selection) {
 					var text;
@@ -416,7 +417,7 @@ function createPaperScript(element) {
 						if (!selection.handleOut.isZero())
 							text += '<br />handleOut: ' + selection.handleOut;
 					} else {
-						text = selection.constructor._name;
+						text = selection.constructor.name;
 						text += '<br />position: ' + selection.position;
 						text += '<br />bounds: ' + selection.bounds;
 					}
@@ -434,10 +435,11 @@ function createPaperScript(element) {
 		});
 
 		var lastPoint;
+		var body = $('body');
 		zoomTool = new paper.Tool();
 		zoomTool.buttonTitle = '\x21';
 		zoomTool.buttonClass = 'tool-symbol';
-		zoomTool.attach({
+		zoomTool.on({
 			mousedown: function(event) {
 				if (event.modifiers.space) {
 					lastPoint = paper.view.projectToView(event.point);
@@ -450,8 +452,21 @@ function createPaperScript(element) {
 				// paper.view.center = paper.view.center - event.point.subtract(paper.view.center) / factor;
 				paper.view.zoom *= factor;
 			},
+			keydown: function(event) {
+				if (event.key === 'option')
+					body.addClass('zoom-out');
+				else if (event.key === 'space')
+					body.addClass('zoom-move');
+			},
+			keyup: function(event) {
+				if (event.key === 'option')
+					body.removeClass('zoom-out');
+				else if (event.key === 'space')
+					body.removeClass('zoom-move');
+			},
 			mousedrag: function(event) {
 				if (event.modifiers.space) {
+					body.addClass('zoom-grab');
 					// In order to have coordinate changes not mess up the dragging,
 					// we need to convert coordinates to view space, and then 
 					// back to project space after the view space has changed.
@@ -461,28 +476,60 @@ function createPaperScript(element) {
 					lastPoint = point;
 				}
 			},
+			mouseup: function(event) {
+				body.removeClass('zoom-grab');
+			},
 			activate: function() {
-				$('body').addClass('zoom');
+				body.addClass('zoom');
 			},
 			deactivate: function() {
-				$('body').removeClass('zoom');
+				body.removeClass('zoom');
 			}
 		});
 
-	saveTool = new paper.Tool();
-	saveTool.buttonTitle = 'Save';
-	saveTool.attach({
-		activate: function(prev) {
-			setTimeout(function() {
-				var svg = new XMLSerializer().serializeToString(paper.project.exportSvg());
-				downloadDataUri({
-					data: 'data:image/svg+xml;base64,' + btoa(svg),
-					filename: 'export.svg'
-				});
-				prev.activate();
-			}, 0);
+		saveTool = new paper.Tool();
+		saveTool.buttonTitle = 'Save';
+		saveTool.on({
+			activate: function(prev) {
+				setTimeout(function() {
+					var svg = paper.project.exportSVG({ asString: true });
+					downloadDataUri({
+						data: 'data:image/svg+xml;base64,' + btoa(svg),
+						filename: 'export.svg'
+					});
+					prev.activate();
+				}, 0);
+			}
+		});
+	}
+
+	function setupPalettes() {
+		// Loop through all palettes and components, and replace simple HTML5
+		// color choosers with much improved spectrum.js ones.
+		var palettes = paper.palettes;
+		for (var i = 0, l = palettes.length; i < l; i ++) {
+			var palette = palettes[i],
+				components = palette.components;
+			for (var j in components) {
+				var component = components[j];
+				if (component.type == 'color') {
+					$(component._input).spectrum({
+						appendTo: $('.canvas'),
+						flat: false,
+						allowEmpty: false,
+						showButtons: true,
+						showInitial: true,
+						showPalette: true,
+						showSelectionPalette: true,
+						showAlpha: true,
+						clickoutFiresChange: true,
+						change: function(value) {
+							component.value = value + '';
+						}
+					});
+				}
+			}
 		}
-	});
 	}
 
 	function setupTools() {
@@ -498,7 +545,7 @@ function createPaperScript(element) {
 			}).mousedown(function() {
 				return false;
 			});
-			tool.attach({
+			tool.on({
 				activate: function() {
 					button.addClass('active');
 				},
@@ -537,7 +584,7 @@ function createPaperScript(element) {
 
 	function toggleView() {
 		var show = source.hasClass('hidden');
-		canvas.modifyClass('hidden', show);
+		canvas.toggleClass('hidden', show);
 		showSource(show);
 		if (!show)
 			runCode();
@@ -581,6 +628,8 @@ function createPaperScript(element) {
 }
 
 $(function() {
+	if (window.location.search === '?large')
+		$('body').addClass('large');
 	$('.paperscript').each(function() {
 		createPaperScript($(this));
 	});

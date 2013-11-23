@@ -32,7 +32,9 @@ body {
 	overflow: hidden;
 }
 
-select, input, textarea {
+select,
+input,
+textarea {
 	font-size: 11px;
 	margin: 0;
 	color: #000;
@@ -80,8 +82,6 @@ img {
 	font-size: 11px;
 	line-height: 16px;
 	padding: 2px 6px;
-	-webkit-border-radius: 4px;
-	-moz-border-radius: 4px;
 	border-radius: 4px;
 	margin: 8px 8px 0 0;
 	background: #eee;
@@ -124,13 +124,11 @@ img {
 
 .paperscript .console {
 	background: #f4f4f4;
+	cursor: default;
 }
 
 .paperscript .console .content {
 	color: #666;
-	font-family: Menlo, Consolas, "Vera Mono", monospace;
-	font-size: 12px;
-	line-height: 16px;
 	overflow: auto;
 	height: 100%;
 }
@@ -182,13 +180,9 @@ img {
     right: 0;
     bottom: 0;
     left: 0;
-	font-family: Menlo, Consolas, "Vera Mono", monospace;
-	font-size: 12px;
-	line-height: 16px;
 }
 
 .paperscript .ace_gutter {
-	font-size: 10px;
 	border-right: 1px solid #999;
 }
 
@@ -201,16 +195,70 @@ img {
 	background-position: 0 center;
 }
 
+/* Fonts */
+
+.paperscript .ace_gutter,
+.paperscript .ace_editor,
+.paperscript .console .content {
+	font-family: 'Akkurat-Mono', Menlo, Consolas, "Vera Mono", monospace;
+	font-size: 12px;
+	line-height: 17px;
+}
+
+.paperscript .ace_gutter {
+	font-size: 10px;
+}
+
+body.large .paperscript .ace_editor,
+body.large .paperscript .ace_gutter,
+body.large .paperscript .console .content {
+	font-size: 15px;
+	line-height: 22px;
+}
+
+body.large .paperscript .ace_gutter {
+	font-size: 11px;
+}
+
 /* Tools */
 
 .zoom {
-	cursor: url(assets/magnify.cur),default;
+	cursor: url('assets/zoom-in.png') 4 4, auto;
+	cursor: -webkit-zoom-in;
+	cursor: zoom-in;
+}
+
+.zoom.zoom-out {
+	cursor: url('assets/zoom-out.png') 4 4, auto;
+	cursor: -webkit-zoom-out;
+	cursor: zoom-out;
+}
+
+.zoom.zoom-move {
+	cursor: url('assets/grab.cur');
+	cursor: -moz-grab;
+	cursor: -webkit-grab;
+	cursor: grab;
+}
+
+.zoom.zoom-grab {
+	cursor: url('assets/grabbing.cur');
+	cursor: -moz-grabbing; 
+	cursor: -webkit-grabbing;
+	cursor: grabbing;
+}
+
+/* Spectrum */
+
+.sp-container {
+	left: auto !important;
+	right: 8px;
 }
 
 /* Splitter */
 
 .splitter_panel {
- position: relative;
+	position: relative;
 }
 
 .splitter_panel .hsplitter,
