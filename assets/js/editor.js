@@ -11,15 +11,6 @@ $.extend($.fn, {
 	}
 });
 
-function downloadDataUri(options) {
-	if (!options.url)
-		options.url = "http://download-data-uri.appspot.com/";
-	$('<form method="post" action="' + options.url
-		+ '" style="display:none"><input type="hidden" name="filename" value="'
-		+ options.filename + '"/><input type="hidden" name="data" value="'
-		+ options.data + '"/></form>').appendTo('body').submit().remove();
-}
-
 var needsProxy = !/^file:/.test(window.location),
 	proxy = 'http://sketch.paperjs.org/lib/proxy.php?mode=native&url=';
 
@@ -40,9 +31,74 @@ if (needsProxy) {
 // values. We're going to replace it with spectrum.js anyhow.
 paper.Component.prototype._types.color.type = 'text';
 
+// URL Encoding
+
+function decode(string) {
+	return RawDeflate.inflate(window.atob(string));
+}
+
+function encode(string) {
+	return window.btoa(RawDeflate.deflate(string));
+}
+
+var script = {
+	name: 'First Script',
+	code: ''
+};
+
+function getScriptId(script) {
+	return script.name + '.sketch.paperjs.org';
+}
+
+function getBlobURL(content, type) {
+	return URL.createObjectURL(new Blob([content], {
+		type: type
+	}));
+}
+
+function updateHash() {
+	window.location.hash = '#S/' + encode(JSON.stringify(script));
+}
+
+if (window.location.hash) {
+	var hash = window.location.hash.substr(1),
+		version = hash.substr(0, 2),
+		string = hash.substr(2),
+		error = true;
+	if (version == 'T/') {
+		script.code = decode(string)
+		error = false;
+	} else if (version == 'S/') {
+		try {
+			script = JSON.parse(decode(string));
+			error = false;
+		} catch (e) {
+			if (console.error)
+				console.error(e);
+		}
+	}
+	if (error) {
+		alert('That shared link format is not supported.');
+	}
+} else {
+	// Support only one script for now, named 'Untitled'. Later on we'll have
+	// a document switcher.
+	script.code = paper.Base.pick(
+			localStorage[getScriptId(script)],
+			// Try legacy storage
+			localStorage['paperjs_'
+				+ window.location.pathname.match(/\/([^\/]*)$/)[1]]
+	);
+}
+
+if (!script.name)
+	script.name = 'Untitled';
+
+var scripts = [];
+scripts.push(script);
+
 function createPaperScript(element) {
-	var scriptName = 'paperjs_' + window.location.pathname.match(/\/([^\/]*)$/)[1],
-		runButton = $('.button.run', element),
+	var runButton = $('.button.script-run', element),
 		canvas = $('canvas', element),
 		showSplit = element.hasClass('split'),
 		sourceFirst = element.hasClass('source'),
@@ -52,32 +108,31 @@ function createPaperScript(element) {
 		tools = $('.tools', element),
 		inspectorInfo = $('.toolbar .info', element),
 		source = $('.source', element),
-		code = localStorage[scriptName] || '',
 		scope,
 		customAnnotations = [],
 		ignoreAnnotation = false;
 
 	function showSource(show) {
 		source.toggleClass('hidden', !show);
-		runButton.text(show ? 'Run' : 'Source');
 		if (show && !editor) {
 			editor = ace.edit(source.find('.editor')[0]);
 			editor.setTheme('ace/theme/bootstrap');
 			editor.setShowInvisibles(false);
 			editor.setDisplayIndentGuides(true);
 			session = editor.getSession();
-			session.setValue(code);
+			session.setValue(script.code);
 			session.setMode('ace/mode/javascript');
 			session.setUseSoftTabs(true);
 			session.setTabSize(4);
 			session.on('change', function() {
-			    localStorage[scriptName] = editor.getValue();
+				script.code = editor.getValue();
+				localStorage[getScriptId(script)] = script.code;
 			});
 			editor.setKeyboardHandler({
 				handleKeyboard: function(data, hashId, keyString, keyCode, event) {
 					if (event) {
 						if ((event.metaKey || event.ctrlKey) && event.which == 69)
-							$('.paperscript .button.run').trigger('click', event);
+							$('.paperscript .button.script-run').trigger('click', event);
 						event.stopPropagation();
 					}
 				}
@@ -112,6 +167,7 @@ function createPaperScript(element) {
 				if (customAnnotations.length > 0)
 					annotations = annotations.concat(customAnnotations);
 				setAnnotations(annotations);
+				updateHash();
 			});
 		}
 	}
@@ -149,16 +205,17 @@ function createPaperScript(element) {
 
 	function evaluateCode() {
 		scope.setup(canvas[0]);
-		scope.evaluate(code);
+		scope.evaluate(script.code);
 		createInspector();
 		setupTools();
 		setupPalettes();
 	}
 
 	function runCode() {
+		// Update the hash each time the code is run also.
+		updateHash();
 		removeAnnotations(customAnnotations);
 		customAnnotations = [];
-		code = editor.getValue();
 		// In order to be able to install our own error handlers first, we are
 		// not relying on automatic script loading, which is disabled by the use
 		// of data-paper-ignore="true". So we need to create a new paperscope
@@ -319,9 +376,12 @@ function createPaperScript(element) {
 	function parseInclude() {
 		var includes = [];
 		// Parse code for includes, and load them synchronously, if present
-		code.replace(/(?:^|[\n\r])include\(['"]([^)]*)['"]\)/g, function(all, url) {
-			includes.push(url);
-		});
+		script.code.replace(
+			/(?:^|[\n\r])include\(['"]([^)]*)['"]\)/g,
+			function(all, url) {
+				includes.push(url);
+			}
+		);
 
 		// Install empty include() function, so code can execute include()
 		// statements, which we process separately above.
@@ -376,8 +436,7 @@ function createPaperScript(element) {
 
 	function createInspector() {
 		inspectorTool = new paper.Tool();
-		inspectorTool.buttonTitle = '\x26';
-		inspectorTool.buttonClass = 'tool-symbol';
+		inspectorTool.buttonClass = 'icon-cursor';
 		prevSelection = null;
 
 		function deselect() {
@@ -439,8 +498,7 @@ function createPaperScript(element) {
 		var lastPoint;
 		var body = $('body');
 		zoomTool = new paper.Tool();
-		zoomTool.buttonTitle = '\x21';
-		zoomTool.buttonClass = 'tool-symbol';
+		zoomTool.buttonClass = 'icon-zoom-in';
 		zoomTool.on({
 			mousedown: function(event) {
 				if (event.modifiers.space) {
@@ -488,33 +546,6 @@ function createPaperScript(element) {
 				body.removeClass('zoom');
 			}
 		});
-
-		saveTool = new paper.Tool();
-		saveTool.buttonTitle = 'Save';
-		saveTool.on({
-			activate: function(prev) {
-				setTimeout(function() {
-					var svg = scope.project.exportSVG({ asString: true });
-					downloadDataUri({
-						data: 'data:image/svg+xml;base64,' + btoa(svg),
-						filename: 'export.svg'
-					});
-					prev.activate();
-				}, 0);
-			}
-		});
-
-		clearTool = new paper.Tool();
-		clearTool.buttonTitle = 'Clear';
-		clearTool.on({
-			activate: function(prev) {
-				setTimeout(function() {
-					scope.project.clear();
-					updateView();
-					prev.activate();
-				}, 0);
-			}
-		});
 	}
 
 	function setupPalettes() {
@@ -543,7 +574,7 @@ function createPaperScript(element) {
 						}
 					});
 					// Hide on mousedown already, not just on click
-					$(document).on('mousedown', function(event) {
+					canvas.on('mousedown', function(event) {
 						input.spectrum('hide', event);
 					});
 				}
@@ -552,27 +583,29 @@ function createPaperScript(element) {
 	}
 
 	function setupTools() {
-		tools.children().remove();
-		paper.tools.forEach(function(tool) {
-			var title = tool.buttonTitle || '\x23',
-				button = $('<div class="button">' + title + '</div>')
-					.prependTo(tools);
-			if (tool.buttonClass || !tool.buttonTitle)
-				button.addClass(tool.buttonClass || 'tool-symbol');
-			button.click(function() {
-				tool.activate();
-			}).mousedown(function() {
-				return false;
-			});
-			tool.on({
-				activate: function() {
-					button.addClass('active');
-				},
-				deactivate: function() {
-					button.removeClass('active');
-				}
-			});
-		});
+		$('.tool', tools).remove();
+		for (var i = paper.tools.length - 1; i >= 0; i--) {
+			// Use an iteration closure so we have private variables.
+			(function(tool) {
+				var title = tool.buttonTitle || '',
+					button = $('<a class="button tool">' + title + '</a>')
+						.prependTo(tools);
+				button.addClass(tool.buttonClass || 'icon-pencil');
+				button.click(function() {
+					tool.activate();
+				}).mousedown(function() {
+					return false;
+				});
+				tool.on({
+					activate: function() {
+						button.addClass('active');
+					},
+					deactivate: function() {
+						button.removeClass('active');
+					}
+				});
+			})(paper.tools[i]);
+		}
 		// Activate first tool now, so it gets highlighted too
 		var tool = paper.tools[0];
 		if (tool)
@@ -641,7 +674,26 @@ function createPaperScript(element) {
 		return false;
 	});
 
-	$('.button.clear-console', element).click(function() {
+	$('.button.canvas-export', element).click(function() {
+		var svg = scope.project.exportSVG({ asString: true });
+		this.href = getBlobURL(svg, 'image/svg+xml');
+		this.download = 'export.svg';
+	});
+
+	$('.button.script-download', element).click(function() {
+		this.href = getBlobURL(script.code, 'text/javascript');
+		this.download = script.name + '.js';
+	});
+
+	$('.button.canvas-clear', element).click(function() {
+		if (!paper.project.isEmpty() && confirm('This clears the whole canvas.\nAre you sure to proceed?')) {
+			scope.project.clear();
+			new paper.Layer();
+			updateView();
+		}
+	});
+
+	$('.button.console-clear', element).click(function() {
 		clearConsole();
 	});
 }

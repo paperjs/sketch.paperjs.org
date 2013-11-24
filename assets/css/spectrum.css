@@ -8,7 +8,8 @@ License: MIT
 .sp-container {
     position: absolute;
     top: 0;
-    left: 0;
+    left: auto !important;
+    right: 8px;
     display: inline-block;
     /* https://github.com/bgrins/spectrum/issues/40 */
     z-index: 9999994;
@@ -212,9 +213,9 @@ License: MIT
 }
 
 /* Clearfix hack */
-.sp-cf: before,
-.sp-cf: after { content: ""; display: table; }
-.sp-cf: after { clear: both; }
+.sp-cf:before,
+.sp-cf:after { content: ""; display: table; }
+.sp-cf:after { clear: both; }
 .sp-cf { *zoom: 1; }
 
 /* Mobile devices, make hue slider bigger so it is easier to slide */
@@ -289,7 +290,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
    border-radius: 3px;
    color: #222;
 }
-.sp-input: focus  {
+.sp-input:focus  {
     border: 1px solid orange;
 }
 .sp-input.sp-validation-error {

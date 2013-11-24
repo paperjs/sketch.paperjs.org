@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sun Nov 24 00:53:12 2013 +0100
+ * Date: Sun Nov 24 16:43:07 2013 +0100
  *
  ***
  *
@@ -466,7 +466,7 @@ Base.inject({
 					: res;
 		},
 
-		deserialize: function(json, target, _data) {
+		deserialize: function(json, create, _data) {
 			var res = json;
 			_data = _data || {};
 			if (Array.isArray(json)) {
@@ -479,20 +479,22 @@ Base.inject({
 				}
 				res = [];
 				for (var i = type ? 1 : 0, l = json.length; i < l; i++)
-					res.push(Base.deserialize(json[i], null, _data));
+					res.push(Base.deserialize(json[i], create, _data));
 				if (isDictionary) {
 					_data.dictionary = res[0];
 				} else if (type) {
 					var args = res;
-					res = target instanceof type
-							? target
-							: Base.create(type.prototype);
-					type.apply(res, args);
+					if (create) {
+						res = create(type, args);
+					} else {
+						res = Base.create(type.prototype);
+						type.apply(res, args);
+					}
 				}
 			} else if (Base.isPlainObject(json)) {
 				res = {};
 				for (var key in json)
-					res[key] = Base.deserialize(json[key], null, _data);
+					res[key] = Base.deserialize(json[key], create, _data);
 			}
 			return res;
 		},
@@ -503,7 +505,23 @@ Base.inject({
 
 		importJSON: function(json, target) {
 			return Base.deserialize(
-					typeof json === 'string' ? JSON.parse(json) : json, target);
+					typeof json === 'string' ? JSON.parse(json) : json,
+					function(type, args) {
+						var obj = target.constructor === type
+								? target
+								: Base.create(type.prototype),
+							isTarget = obj === target;
+						if (args.length === 1 && obj instanceof Item
+								&& (!(obj instanceof Layer) || isTarget)) {
+							var arg = args[0];
+							if (Base.isPlainObject(arg))
+								arg.insert = false;
+						}
+						type.apply(obj, args);
+						if (isTarget)
+							target = null;
+						return obj;
+					});
 		},
 
 		splice: function(list, items, index, remove) {
@@ -531,11 +549,14 @@ Base.inject({
 		},
 
 		merge: function() {
-			return Base.each(arguments, function(hash) {
-				Base.each(hash, function(value, key) {
-					this[key] = value;
-				}, this);
-			}, new Base(), true); 
+			var res = new Base();
+			for (var i = 0, l = arguments.length; i < l; i++) {
+				var obj = arguments[i];
+				for (var j in obj)
+					if (obj.hasOwnProperty(j))
+						res[j] = obj[j];
+			}
+			return res;
 		},
 
 		capitalize: function(str) {
@@ -783,7 +804,7 @@ var PaperScopeItem = Base.extend(Callback, {
 		if (!this._scope)
 			return false;
 		var prev = this._scope[this._reference];
-		if (prev && prev != this)
+		if (prev && prev !== this)
 			prev.fire('deactivate');
 		this._scope[this._reference] = this;
 		this.fire('activate', prev);
@@ -2306,7 +2327,7 @@ var Project = PaperScopeItem.extend({
 		this.layers = [];
 		this.symbols = [];
 		this._currentStyle = new Style();
-		this.activeLayer = null;
+		this.activeLayer = new Layer();
 		if (view)
 			this.view = view instanceof View ? view : View.create(view);
 		this._selectedItems = {};
@@ -2323,6 +2344,11 @@ var Project = PaperScopeItem.extend({
 		for (var i = this.layers.length - 1; i >= 0; i--)
 			this.layers[i].remove();
 		this.symbols = [];
+	},
+
+	isEmpty: function() {
+		return this.layers.length <= 1
+			&& (!this.activeLayer || this.activeLayer.isEmpty());
 	},
 
 	remove: function remove() {
@@ -2343,6 +2369,20 @@ var Project = PaperScopeItem.extend({
 
 	getIndex: function() {
 		return this._index;
+	},
+
+	addChild: function(child) {
+		if (child instanceof Layer) {
+			Base.splice(this.layers, [child]);
+			if (!this.activeLayer)
+				this.activeLayer = child;
+		} else if (child instanceof Item) {
+			(this.activeLayer
+				|| this.addChild(new Layer({ insert: false }))).addChild(child);
+		} else {
+			child = null;
+		}
+		return child;
 	},
 
 	getSelectedItems: function() {
@@ -2417,7 +2457,8 @@ var Project = PaperScopeItem.extend({
 
 	importJSON: function(json) {
 		this.activate();
-		return Base.importJSON(json);
+		var layer = this.activeLayer;
+		return Base.importJSON(json, layer && layer.isEmpty() && layer);
 	},
 
 	draw: function(ctx, matrix, ratio) {
@@ -3090,13 +3131,7 @@ var Item = Base.extend(Callback, {
 	},
 
 	copyTo: function(itemOrProject) {
-		var copy = this.clone();
-		if (itemOrProject.layers) {
-			itemOrProject.activeLayer.addChild(copy);
-		} else {
-			itemOrProject.addChild(copy);
-		}
-		return copy;
+		return itemOrProject.addChild(this.clone(false));
 	},
 
 	rasterize: function(resolution) {
@@ -3774,11 +3809,17 @@ var Group = Item.extend({
 var Layer = Group.extend({
 	_class: 'Layer',
 
-	initialize: function Layer() {
-		this._project = paper.project;
-		this._index = this._project.layers.push(this) - 1;
-		Group.apply(this, arguments);
-		this.activate();
+	initialize: function Layer(arg) {
+		var props = Base.isPlainObject(arg)
+				? Base.merge(arg) 
+				: { children: Array.isArray(arg) ? arg : arguments },
+			insert = props.insert;
+		props.insert = false;
+		Group.call(this, props);
+		if (insert || insert === undefined) {
+			this._project.addChild(this);
+			this.activate();
+		}
 	},
 
 	_remove: function _remove(notify) {
@@ -3814,7 +3855,8 @@ var Layer = Group.extend({
 	},
 
 	_insert: function _insert(above, item, _preserve) {
-		if (item instanceof Layer && !item._parent && this._remove(true)) {
+		if (item instanceof Layer && !item._parent) {
+			this._remove(true);
 			Base.splice(item._project.layers, [this],
 					item._index + (above ? 1 : 0), 0);
 			this._setProject(item._project);
@@ -10289,16 +10331,15 @@ var Component = Base.extend(Callback, {
 					: typeof obj.value;
 		this._meta = this._types[this._type] || { type: this._type };
 		var that = this,
-			dontFire = true,
 			id = 'component-' + this._id;
+		this._dontFire = true;
 		this._input = DomElement.create(this._meta.tag || 'input', {
 			id: id,
 			type: this._meta.type,
 			events: {
 				change: function() {
 					that.setValue(
-						DomElement.get(this, that._meta.value || 'value'),
-						dontFire);
+						DomElement.get(this, that._meta.value || 'value'));
 				},
 				click: function() {
 					that.fire('click');
@@ -10306,7 +10347,7 @@ var Component = Base.extend(Callback, {
 			}
 		});
 		this.attach('change', function(value) {
-			if (!dontFire)
+			if (!this._dontFire)
 				this._palette.fire('change', this, this.name, value);
 		});
 		this._element = DomElement.create('tr', [
@@ -10317,7 +10358,7 @@ var Component = Base.extend(Callback, {
 			this[key] = value;
 		}, this);
 		this._defaultValue = this._value;
-		dontFire = false;
+		this._dontFire = false;
 	},
 
 	getType: function() {
@@ -10350,7 +10391,7 @@ var Component = Base.extend(Callback, {
 		return getValue ? getValue.call(this, value) : value;
 	},
 
-	setValue: function(value, _dontFire) {
+	setValue: function(value) {
 		var key = this._meta.value || 'value',
 			setValue = this._meta.setValue;
 		if (setValue)
@@ -10361,7 +10402,7 @@ var Component = Base.extend(Callback, {
 			value = parseFloat(value, 10);
 		if (this._value !== value) {
 			this._value = value;
-			if (!_dontFire)
+			if (!this._dontFire)
 				this.fire('change', this.getValue());
 		}
 	},
