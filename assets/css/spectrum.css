@@ -301,15 +301,21 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     float: left;
     position: relative;
     padding: 10px;
+    /* To make the 3d line go all the way */
+    padding-bottom: 300px;
+    margin-bottom: -290px;
 }
 .sp-picker-container {
     width: 200px;
-    border-left: solid 1px #fff;
+    /* 3d line part 1 */
+    border-left: solid 1px #fafafa;
 }
 
 /* Palettes */
 .sp-palette-container {
-    border-right: solid 1px #ccc;
+    /* 3d line part 2 */
+    border-right: solid 1px #ddd;
+    height: 100%;
 }
 
 .sp-palette .sp-thumb-el {
@@ -322,7 +328,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     cursor: pointer;
     border: solid 2px transparent;
 }
-.sp-palette .sp-thumb-el: hover,
+.sp-palette .sp-thumb-el:hover,
 .sp-palette .sp-thumb-el.sp-thumb-active {
     border-color: orange;
 }
@@ -351,6 +357,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 /* Buttons */
 .sp-button-container {
     float: right;
+    line-height: 27px; /* .sp-initial height + 2 x border */
 }
 
 /* Replacer (the little preview div that shows up instead of the <input>) */
@@ -365,7 +372,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     color: #333;
     vertical-align: middle;
 }
-.sp-replacer: hover,
+.sp-replacer:hover,
 .sp-replacer.sp-active {
     background: #bbb;
     color: #111;
@@ -407,7 +414,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     padding-bottom: 0;
 }
 
-.sp-palette span: hover,
+.sp-palette span:hover,
 .sp-palette span.sp-thumb-active {
     border-color: #000;
 }
