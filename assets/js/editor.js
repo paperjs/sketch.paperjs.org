@@ -36,6 +36,8 @@ if (needsProxy) {
 	});
 }
 
+// Tell the color component to use a normal text input, so it can receive rgba()
+// values. We're going to replace it with spectrum.js anyhow.
 paper.Component.prototype._types.color.type = 'text';
 
 function createPaperScript(element) {
@@ -492,11 +494,23 @@ function createPaperScript(element) {
 		saveTool.on({
 			activate: function(prev) {
 				setTimeout(function() {
-					var svg = paper.project.exportSVG({ asString: true });
+					var svg = scope.project.exportSVG({ asString: true });
 					downloadDataUri({
 						data: 'data:image/svg+xml;base64,' + btoa(svg),
 						filename: 'export.svg'
 					});
+					prev.activate();
+				}, 0);
+			}
+		});
+
+		clearTool = new paper.Tool();
+		clearTool.buttonTitle = 'Clear';
+		clearTool.on({
+			activate: function(prev) {
+				setTimeout(function() {
+					scope.project.clear();
+					updateView();
 					prev.activate();
 				}, 0);
 			}
@@ -513,7 +527,8 @@ function createPaperScript(element) {
 			for (var j in components) {
 				var component = components[j];
 				if (component.type == 'color') {
-					$(component._input).spectrum({
+					var input = $(component._input);
+					input.spectrum({
 						appendTo: $('.canvas'),
 						flat: false,
 						allowEmpty: false,
@@ -526,6 +541,10 @@ function createPaperScript(element) {
 						change: function(value) {
 							component.value = value + '';
 						}
+					});
+					// Hide on mousedown already, not just on click
+					$(document).on('mousedown', function(event) {
+						input.spectrum('hide', event);
 					});
 				}
 			}

@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sun Nov 24 00:23:32 2013 +0100
+ * Date: Sun Nov 24 00:53:12 2013 +0100
  *
  ***
  *
@@ -2306,7 +2306,7 @@ var Project = PaperScopeItem.extend({
 		this.layers = [];
 		this.symbols = [];
 		this._currentStyle = new Style();
-		this.activeLayer = new Layer();
+		this.activeLayer = null;
 		if (view)
 			this.view = view instanceof View ? view : View.create(view);
 		this._selectedItems = {};
@@ -2559,12 +2559,11 @@ var Item = Base.extend(Callback, {
 	_initialize: function(props, point) {
 		this._id = Item._id = (Item._id || 0) + 1;
 		if (!this._project) {
-			var project = paper.project,
-				layer = project.activeLayer;
-			if (layer && !(props && props.insert === false)) {
-				layer.addChild(this);
-			} else {
+			var project = paper.project;
+			if (props && props.insert === false) {
 				this._setProject(project);
+			} else {
+				(project.activeLayer || new Layer()).addChild(this);
 			}
 		}
 		this._style = new Style(this._project._currentStyle, this);
@@ -10363,7 +10362,7 @@ var Component = Base.extend(Callback, {
 		if (this._value !== value) {
 			this._value = value;
 			if (!_dontFire)
-				this.fire('change', value);
+				this.fire('change', this.getValue());
 		}
 	},
 
