@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sun Nov 24 16:43:07 2013 +0100
+ * Date: Sun Nov 24 22:53:41 2013 +0100
  *
  ***
  *
@@ -9565,10 +9565,10 @@ var View = Base.extend(Callback, {
 			};
 			DomEvent.add(window, this._windowHandlers);
 		} else {
-			size = new Size(parseInt(element.getAttribute('width'), 10),
-						parseInt(element.getAttribute('height'), 10));
-			if (size.isNaN())
-				size = DomElement.getSize(element);
+			size = DomElement.getSize(element);
+			if (size.isNaN() || size.isZero())
+				size = new Size(parseInt(element.getAttribute('width'), 10),
+							parseInt(element.getAttribute('height'), 10));
 		}
 		this._setViewSize(size);
 		if (PaperScope.hasAttribute(element, 'stats')

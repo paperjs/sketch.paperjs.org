@@ -78,6 +78,7 @@ img {
   background: #eee;
   float: right; }
 .paperscript .button {
+  float: left;
   font-size: 14px;
   line-height: 18px;
   border: 0; }

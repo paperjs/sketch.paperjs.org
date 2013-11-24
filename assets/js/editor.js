@@ -128,15 +128,23 @@ function createPaperScript(element) {
 				script.code = editor.getValue();
 				localStorage[getScriptId(script)] = script.code;
 			});
-			editor.setKeyboardHandler({
-				handleKeyboard: function(data, hashId, keyString, keyCode, event) {
-					if (event) {
-						if ((event.metaKey || event.ctrlKey) && event.which == 69)
-							$('.paperscript .button.script-run').trigger('click', event);
-						event.stopPropagation();
-					}
+			var commands = [{
+				name: "execute",
+				bindKey: 'Ctrl-E|Meta-E',
+				exec: function(editor) {
+					$('.button.script-run').trigger('click');
 				}
-			});
+			}/*, {
+				name: "download",
+				bindKey: 'Ctrl-S|Meta-S',
+				exec: function(editor) {
+					var link = $('.button.script-download');
+					link.trigger('click');
+					window.open(link.attr('href'));
+				}
+			}*/];
+			editor.commands.addCommands(commands);
+
 			/*
 			// This does not seem to work yet in Ace, but should soon:
 			session.$worker.send("setOptions", {
