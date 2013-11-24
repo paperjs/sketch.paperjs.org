@@ -212,15 +212,15 @@ License: MIT
     .sp-fill { padding-top: 60%; }
 }
 .sp-dragger {
-   border-radius: 5px;
-   height: 5px;
-   width: 5px;
+   border-radius: 6px;
+   height: 6px;
+   width: 6px;
    border: 1px solid #fff;
-   background: #000;
    cursor: pointer;
-   position:absolute;
-   top:0;
+   position: absolute;
+   top: 0;
    left: 0;
+   margin: -4px;
 }
 .sp-slider {
     position: absolute;

@@ -156,7 +156,6 @@
             visible = false,
             dragWidth = 0,
             dragHeight = 0,
-            dragHelperHeight = 0,
             slideHeight = 0,
             slideWidth = 0,
             alphaWidth = 0,
@@ -737,14 +736,8 @@
                 // Where to show the little circle in that displays your current selected color
                 var dragX = s * dragWidth;
                 var dragY = dragHeight - (v * dragHeight);
-                dragX = Math.max(
-                    -dragHelperHeight,
-                    Math.min(dragWidth - dragHelperHeight, dragX - dragHelperHeight)
-                );
-                dragY = Math.max(
-                    -dragHelperHeight,
-                    Math.min(dragHeight - dragHelperHeight, dragY - dragHelperHeight)
-                );
+                dragX = Math.max(0, Math.min(dragWidth, dragX));
+                dragY = Math.max(0, Math.min(dragHeight, dragY));
                 dragHelper.css({
                     "top": dragY,
                     "left": dragX
@@ -789,7 +782,6 @@
         function reflow() {
             dragWidth = dragger.width();
             dragHeight = dragger.height();
-            dragHelperHeight = dragHelper.height();
             slideWidth = slider.width();
             slideHeight = slider.height();
             slideHelperHeight = slideHelper.height();
