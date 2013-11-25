@@ -14,7 +14,7 @@ $.extend($.fn, {
 var needsProxy = !/^file:/.test(window.location),
 	proxy = 'http://sketch.paperjs.org/lib/proxy.php?mode=native&url=';
 
-function getProxyUrl(url) {
+function getProxyURL(url) {
 	return !/^\w+:\/\//.test(url) ? url : proxy + escape(url);
 }
 
@@ -35,7 +35,7 @@ if (needsProxy) {
 	// Load external data through proxy, to circumvent cross-domain restrictions
 	Raster.inject({
 		initialize: function(url, pointOrMatrix) {
-			return this.base(getProxyUrl(url), pointOrMatrix);
+			return this.base(getProxyURL(url), pointOrMatrix);
 		}
 	});
 }
@@ -55,7 +55,7 @@ function encode(string) {
 }
 
 var script = {
-	name: 'First Script',
+	name: 'Sketch',
 	code: ''
 };
 
@@ -69,6 +69,12 @@ function getBlobURL(content, type) {
 	}));
 }
 
+function getTimeStamp() {
+	var parts = new Date().toJSON().toString().replace(/[-:]/g, '').match(
+			/^20(.*)T(.*)\.\d*Z$/);
+	return parts[1] + '_' + parts[2]; 
+}
+
 function updateHash() {
 	window.location.hash = '#S/' + encode(JSON.stringify(script));
 }
@@ -79,7 +85,7 @@ if (window.location.hash) {
 		string = hash.substr(2),
 		error = true;
 	if (version == 'T/') {
-		script.code = decode(string)
+		script.code = decode(string) || '';
 		error = false;
 	} else if (version == 'S/') {
 		try {
@@ -100,12 +106,13 @@ if (window.location.hash) {
 			localStorage[getScriptId(script)],
 			// Try legacy storage
 			localStorage['paperjs_'
-				+ window.location.pathname.match(/\/([^\/]*)$/)[1]]
+				+ window.location.pathname.match(/\/([^\/]*)$/)[1]],
+			''
 	);
 }
 
-if (!script.name)
-	script.name = 'Untitled';
+if (!script.name || script.name == 'First Script')
+	script.name = 'Sketch';
 
 var scripts = [];
 scripts.push(script);
@@ -373,7 +380,7 @@ function createPaperScript(element) {
 							params.push(key + '=' + escape(options.data[key]));
 						address += (/\?/.test(url) ? '&' : '?') + params.join('&');
 					}
-					options.url = getProxyUrl(address);
+					options.url = getProxyURL(address);
 				}
 				return $.ajax($.extend({
 					dataType: (url.match(/\.(json|xml|html)$/) || [])[1],
@@ -438,7 +445,7 @@ function createPaperScript(element) {
 			soundManager.createSound = function(options, url) {
 				if (url !== undefined)
 					options = { id: options, url: url };
-				options.url = getProxyUrl(options.url);
+				options.url = getProxyURL(options.url);
 				return createSound.call(soundManager, options);
 			};
 		}
@@ -697,12 +704,12 @@ function createPaperScript(element) {
 	$('.button.canvas-export', element).click(function() {
 		var svg = scope.project.exportSVG({ asString: true });
 		this.href = getBlobURL(svg, 'image/svg+xml');
-		this.download = 'export.svg';
+		this.download = 'Export_' + getTimeStamp() + '.svg';
 	});
 
 	$('.button.script-download', element).click(function() {
 		this.href = getBlobURL(script.code, 'text/javascript');
-		this.download = script.name + '.js';
+		this.download = script.name + '_' + getTimeStamp() + '.js';
 	});
 
 	$('.button.canvas-clear', element).click(function() {
