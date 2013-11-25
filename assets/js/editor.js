@@ -18,9 +18,22 @@ function getProxyUrl(url) {
 	return !/^\w+:\/\//.test(url) ? url : proxy + escape(url);
 }
 
+// Import...
+
+var Base = paper.Base,
+	PaperScope = paper.PaperScope,
+	Item = paper.Item,
+	Path = paper.Path,
+	Group = paper.Group,
+	Layer = paper.Layer,
+	Segment = paper.Segment,
+	Raster = paper.Raster,
+	Tool = paper.Tool,
+	Component = paper.Component;
+
 if (needsProxy) {
 	// Load external data through proxy, to circumvent cross-domain restrictions
-	paper.Raster.inject({
+	Raster.inject({
 		initialize: function(url, pointOrMatrix) {
 			return this.base(getProxyUrl(url), pointOrMatrix);
 		}
@@ -29,7 +42,7 @@ if (needsProxy) {
 
 // Tell the color component to use a normal text input, so it can receive rgba()
 // values. We're going to replace it with spectrum.js anyhow.
-paper.Component.prototype._types.color.type = 'text';
+Component.prototype._types.color.type = 'text';
 
 // URL Encoding
 
@@ -83,7 +96,7 @@ if (window.location.hash) {
 } else {
 	// Support only one script for now, named 'Untitled'. Later on we'll have
 	// a document switcher.
-	script.code = paper.Base.pick(
+	script.code = Base.pick(
 			localStorage[getScriptId(script)],
 			// Try legacy storage
 			localStorage['paperjs_'
@@ -230,7 +243,7 @@ function createPaperScript(element) {
 		// each time.
 		if (scope)
 			scope.remove();
-		scope = new paper.PaperScope();
+		scope = new PaperScope();
 		setupConsole();
 		extendScope();
 		// parseInclude() triggers evaluateCode() in the right moment for us.
@@ -260,16 +273,16 @@ function createPaperScript(element) {
 				if (obj.toString !== Object.prototype.toString
 					&& obj.toString !== Array.prototype.toString) {
 					return obj.toString();
-				} else if (paper.Base.isPlainObject(obj)) {
+				} else if (Base.isPlainObject(obj)) {
 					if (indent != null)
 						indent += '  ';
-					return (indent ? '{\n' : '{') + paper.Base.each(obj, function(value, key) {
+					return (indent ? '{\n' : '{') + Base.each(obj, function(value, key) {
 						this.push(indent + key + ': ' + toString(value, indent, true));
 					}, []).join(indent != null ? ',\n' : ', ') + (indent
 						? '\n' + indent.substring(0, indent.length - 2) + '}'
 						: ' }');
 				} else if (typeof obj.length === 'number') {
-					return '[ ' + paper.Base.each(obj, function(value, index) {
+					return '[ ' + Base.each(obj, function(value, index) {
 						this[index] = toString(value, indent, true);
 					}, []).join(', ') + ' ]';
 				}
@@ -280,7 +293,7 @@ function createPaperScript(element) {
 		function print(className, args) {
 			$('<div/>')
 				.addClass(className)
-				.text(paper.Base.each(args, function(arg) {
+				.text(Base.each(args, function(arg) {
 									this.push(toString(arg, ''));
 								}, []).join(' '))
 				.appendTo(consoleContainer);
@@ -443,7 +456,7 @@ function createPaperScript(element) {
 		prevSelection;
 
 	function createInspector() {
-		inspectorTool = new paper.Tool();
+		inspectorTool = new Tool();
 		inspectorTool.buttonClass = 'icon-cursor';
 		prevSelection = null;
 
@@ -478,7 +491,7 @@ function createPaperScript(element) {
 				inspectorInfo.html('');
 				if (selection) {
 					var text;
-					if (selection instanceof paper.Segment) {
+					if (selection instanceof Segment) {
 						text = 'Segment';
 						text += '<br />point: ' + selection.point;
 						if (!selection.handleIn.isZero())
@@ -505,7 +518,7 @@ function createPaperScript(element) {
 
 		var lastPoint;
 		var body = $('body');
-		zoomTool = new paper.Tool();
+		zoomTool = new Tool();
 		zoomTool.buttonClass = 'icon-zoom-in';
 		zoomTool.on({
 			mousedown: function(event) {
@@ -563,8 +576,7 @@ function createPaperScript(element) {
 		for (var i = 0, l = palettes.length; i < l; i ++) {
 			var palette = palettes[i],
 				components = palette.components;
-			for (var j in components) {
-				var component = components[j];
+			paper.Base.each(components, function(component) {
 				if (component.type == 'color') {
 					var input = $(component._input);
 					input.spectrum({
@@ -586,7 +598,7 @@ function createPaperScript(element) {
 						input.spectrum('hide', event);
 					});
 				}
-			}
+			});
 		}
 	}
 
@@ -696,7 +708,7 @@ function createPaperScript(element) {
 	$('.button.canvas-clear', element).click(function() {
 		if (!paper.project.isEmpty() && confirm('This clears the whole canvas.\nAre you sure to proceed?')) {
 			scope.project.clear();
-			new paper.Layer();
+			new Layer();
 			updateView();
 		}
 	});
