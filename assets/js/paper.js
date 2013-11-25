@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sun Nov 24 22:53:41 2013 +0100
+ * Date: Mon Nov 25 01:04:51 2013 +0100
  *
  ***
  *
@@ -7157,20 +7157,18 @@ var Path = PathItem.extend({
 			this.quadraticCurveTo(handle, to);
 		},
 
-		arcTo: function(to, clockwise ) {
+		arcTo: function() {
 			var current = getCurrentSegment(this),
 				from = current._point,
 				through,
-				point = Point.read(arguments),
-				next = Base.pick(Base.peek(arguments), true);
-			if (typeof next === 'boolean') {
-				to = point;
-				clockwise = next;
+				to = Point.read(arguments),
+				clockwise = Base.pick(Base.peek(arguments), true);
+			if (typeof clockwise === 'boolean') {
 				var middle = from.add(to).divide(2),
 				through = middle.add(middle.subtract(from).rotate(
 						clockwise ? -90 : 90));
 			} else {
-				through = point;
+				through = to;
 				to = Point.read(arguments);
 			}
 			var l1 = new Line(from.add(through).divide(2),
@@ -7245,10 +7243,14 @@ var Path = PathItem.extend({
 		},
 
 		arcBy: function() {
-			var through = Point.read(arguments),
-				to = Point.read(arguments),
-				current = getCurrentSegment(this)._point;
-			this.arcTo(current.add(through), current.add(to));
+			var current = getCurrentSegment(this)._point,
+				point = current.add(Point.read(arguments)),
+				clockwise = Base.pick(Base.peek(arguments), true);
+			if (typeof clockwise === 'boolean') {
+				this.arcTo(point, clockwise);
+			} else {
+				this.arcTo(point, current.add(Point.read(arguments)));
+			}
 		},
 
 		closePath: function() {
