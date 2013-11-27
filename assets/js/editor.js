@@ -22,6 +22,7 @@ function getProxyURL(url) {
 
 var Base = paper.Base,
 	PaperScope = paper.PaperScope,
+	PaperScript = paper.PaperScript,
 	Item = paper.Item,
 	Path = paper.Path,
 	Group = paper.Group,
@@ -346,6 +347,8 @@ function createPaperScript(element) {
 		} else if (match = error.match(/(.*)Line (\d*):\s*(.*)/i)) { // Esprima
 			error = match[1] + match[3];
 			lineNumber = match[2];
+		} else {
+			lineNumber -= PaperScript.lineNumberBase;
 		}
 		if (lineNumber) {
 			var annotation = { 
