@@ -100,7 +100,8 @@ if (window.location.hash) {
 	if (error) {
 		alert('That shared link format is not supported.');
 	}
-} else {
+} 
+if (!script.code) {
 	// Support only one script for now, named 'Untitled'. Later on we'll have
 	// a document switcher.
 	script.code = Base.pick(
@@ -166,6 +167,12 @@ function createPaperScript(element) {
 			}*/];
 			editor.commands.addCommands(commands);
 
+			editor.setKeyboardHandler({
+				handleKeyboard: function(data, hashId, keyString, keyCode, event) {
+					if (event)
+						event.stopPropagation();
+				}
+			});
 			/*
 			// This does not seem to work yet in Ace, but should soon:
 			session.$worker.send("setOptions", {
@@ -320,15 +327,18 @@ function createPaperScript(element) {
 
 				warn: function() {
 					print('line warn', arguments);
+				},
+
+				clear: function() {
+					consoleContainer.children().remove();
 				}
 			}
 		});
 	}
 
 	function clearConsole() {
-		if (consoleContainer) {
-			consoleContainer.children().remove();
-		}
+		if (scope.console)
+			scope.console.clear();
 	}
 
 	function updateView() {
@@ -347,8 +357,6 @@ function createPaperScript(element) {
 		} else if (match = error.match(/(.*)Line (\d*):\s*(.*)/i)) { // Esprima
 			error = match[1] + match[3];
 			lineNumber = match[2];
-		} else {
-			lineNumber -= PaperScript.lineNumberBase;
 		}
 		if (lineNumber) {
 			var annotation = { 
@@ -704,10 +712,16 @@ function createPaperScript(element) {
 		return false;
 	});
 
-	$('.button.canvas-export', element).click(function() {
+	$('.button.canvas-export-svg', element).click(function() {
 		var svg = scope.project.exportSVG({ asString: true });
 		this.href = getBlobURL(svg, 'image/svg+xml');
 		this.download = 'Export_' + getTimeStamp() + '.svg';
+	});
+
+	$('.button.canvas-export-json', element).click(function() {
+		var svg = scope.project.exportJSON();
+		this.href = getBlobURL(svg, 'text/json');
+		this.download = 'Export_' + getTimeStamp() + '.json';
 	});
 
 	$('.button.script-download', element).click(function() {
