@@ -1,6 +1,7 @@
 @import 'bourbon/bourbon';
 
-@include font-face('Fontello', 'fonts/fontello', normal, normal);
+@include font-face("Fontello", "fonts/fontello");
+@include font-face("AkkuratMono", "http://assets.paperjs.org/fonts/akkurat-mono");
 
 [class^="icon-"]:before,
 [class*=" icon-"]:before {
@@ -178,54 +179,58 @@ img {
 			border-top: 0;
 		}
 	}
-}
 
-// Editor
+	// Editor
 
-.paperscript .ace_editor { 
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-}
+	.ace_editor { 
+	    position: absolute;
+	    top: 0;
+	    right: 0;
+	    bottom: 0;
+	    left: 0;
+	}
 
-.paperscript .ace_gutter {
-	border-right: 1px solid #999;
-}
+	.ace_gutter {
+		border-right: 1px solid #999;
+	}
 
-.paperscript .ace_gutter-cell {
-	padding-left: 13px;
-}
+	.ace_gutter-cell {
+		padding-left: 14px; // enough space for errors and warnings
 
-.paperscript .ace_gutter-cell.ace_error,
-.paperscript .ace_gutter-cell.ace_warning {
-	background-position: 0 center;
-}
+		&.ace_error,
+		&.ace_warning {
+			background-position: 0 center;
+		}
+	}
 
-// Fonts
+	// Fonts
 
-.paperscript .ace_gutter,
-.paperscript .ace_editor,
-.paperscript .console .content {
-	font-family: 'Akkurat-Mono', Menlo, Consolas, "Vera Mono", monospace;
-	font-size: 12px;
-	line-height: 17px;
-}
+	.ace_gutter,
+	.ace_editor,
+	.console .content {
+		font-family: "AkkuratMono", Menlo, Consolas, "Vera Mono", monospace;
+		font-size: 13px;
+		line-height: 18px;
+	}
 
-.paperscript .ace_gutter {
-	font-size: 10px;
-}
+	.ace_gutter-cell {
+		font-size: 11px;
+		line-height: 20px;
+	}
 
-body.large .paperscript .ace_editor,
-body.large .paperscript .ace_gutter,
-body.large .paperscript .console .content {
-	font-size: 15px;
-	line-height: 22px;
-}
+	body.large & {
+		.ace_editor,
+		.ace_gutter,
+		.console .content {
+			font-size: 16px;
+			line-height: 23px;
+		}
 
-body.large .paperscript .ace_gutter {
-	font-size: 11px;
+		.ace_gutter-cell {
+			font-size: 12px;
+			line-height: 24px;
+		}
+	}
 }
 
 // Tools

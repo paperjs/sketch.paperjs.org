@@ -5,6 +5,13 @@
   src: url("fonts/fontello.eot");
   src: url("fonts/fontello.eot?#iefix") format("embedded-opentype"), url("fonts/fontello.woff") format("woff"), url("fonts/fontello.ttf") format("truetype"), url("fonts/fontello.svg#Fontello") format("svg"); }
 
+@font-face {
+  font-family: "AkkuratMono";
+  font-weight: normal;
+  font-style: normal;
+  src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot");
+  src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot?#iefix") format("embedded-opentype"), url("http://assets.paperjs.org/fonts/akkurat-mono.woff") format("woff"), url("http://assets.paperjs.org/fonts/akkurat-mono.ttf") format("truetype"), url("http://assets.paperjs.org/fonts/akkurat-mono.svg#AkkuratMono") format("svg"); }
+
 [class^="icon-"]:before,
 [class*=" icon-"]:before {
   font-family: 'Fontello';
@@ -123,42 +130,35 @@ img {
 .paperscript.split .canvas {
   border: 0;
   border-top: 0; }
-
 .paperscript .ace_editor {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0; }
-
 .paperscript .ace_gutter {
   border-right: 1px solid #999; }
-
 .paperscript .ace_gutter-cell {
-  padding-left: 13px; }
-
-.paperscript .ace_gutter-cell.ace_error,
-.paperscript .ace_gutter-cell.ace_warning {
-  background-position: 0 center; }
-
+  padding-left: 14px; }
+  .paperscript .ace_gutter-cell.ace_error, .paperscript .ace_gutter-cell.ace_warning {
+    background-position: 0 center; }
 .paperscript .ace_gutter,
 .paperscript .ace_editor,
 .paperscript .console .content {
-  font-family: 'Akkurat-Mono', Menlo, Consolas, "Vera Mono", monospace;
-  font-size: 12px;
-  line-height: 17px; }
-
-.paperscript .ace_gutter {
-  font-size: 10px; }
-
+  font-family: "AkkuratMono", Menlo, Consolas, "Vera Mono", monospace;
+  font-size: 13px;
+  line-height: 18px; }
+.paperscript .ace_gutter-cell {
+  font-size: 11px;
+  line-height: 20px; }
 body.large .paperscript .ace_editor,
 body.large .paperscript .ace_gutter,
 body.large .paperscript .console .content {
-  font-size: 15px;
-  line-height: 22px; }
-
-body.large .paperscript .ace_gutter {
-  font-size: 11px; }
+  font-size: 16px;
+  line-height: 23px; }
+body.large .paperscript .ace_gutter-cell {
+  font-size: 12px;
+  line-height: 24px; }
 
 .zoom {
   cursor: url("assets/zoom-in.png") 4 4, auto;
