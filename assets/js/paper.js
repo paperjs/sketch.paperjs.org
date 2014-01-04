@@ -12221,7 +12221,7 @@ var PaperScript = Base.exports.PaperScript = (function() {
 	function execute(code, scope) {
 		paper = scope;
 		var view = scope.getView(),
-			tool = /\s+on(?:Key|Mouse)(?:Up|Down|Move|Drag)/.test(code)
+			tool = /\s+on(?:Key|Mouse)(?:Up|Down|Move|Drag)\b/.test(code)
 					? new Tool()
 					: null,
 			toolHandlers = tool ? tool._events : [],
@@ -12237,10 +12237,13 @@ var PaperScript = Base.exports.PaperScript = (function() {
 			}
 		}
 		handlers = Base.each(handlers, function(key) {
-			params.push(key);
-			this.push(key + ': ' + key);
+			if (new RegExp('\\s+' + key + '\\b').test(code)) {
+				params.push(key);
+				this.push(key + ': ' + key);
+			}
 		}, []).join(', ');
-		code += '\nreturn { ' + handlers + ' };';
+		if (handlers)
+			code += '\nreturn { ' + handlers + ' };';
 		if (window.InstallTrigger || window.chrome) { 
 			var script = document.createElement('script'),
 				head = document.head;
@@ -12255,7 +12258,7 @@ var PaperScript = Base.exports.PaperScript = (function() {
 		} else {
 			func = Function(params, code);
 		}
-		var res = func.apply(scope, args);
+		var res = func.apply(scope, args) || {};
 		Base.each(toolHandlers, function(key) {
 			var value = res[key];
 			if (value)
