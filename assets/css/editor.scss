@@ -1,7 +1,7 @@
 @import 'bourbon/bourbon';
 
 @include font-face("Fontello", "fonts/fontello");
-@include font-face("AkkuratMono", "http://assets.paperjs.org/fonts/akkurat-mono");
+@include font-face("Akkurat-Mono", "http://assets.paperjs.org/fonts/akkurat-mono");
 
 [class^="icon-"]:before,
 [class*=" icon-"]:before {
@@ -208,7 +208,7 @@ img {
 	.ace_gutter,
 	.ace_editor,
 	.console .content {
-		font-family: "AkkuratMono", Menlo, Consolas, "Vera Mono", monospace;
+		font-family: "Akkurat-Mono", Menlo, Consolas, "Vera Mono", monospace;
 		font-size: 13px;
 		line-height: 18px;
 	}

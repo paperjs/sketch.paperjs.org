@@ -6,11 +6,11 @@
   src: url("fonts/fontello.eot?#iefix") format("embedded-opentype"), url("fonts/fontello.woff") format("woff"), url("fonts/fontello.ttf") format("truetype"), url("fonts/fontello.svg#Fontello") format("svg"); }
 
 @font-face {
-  font-family: "AkkuratMono";
+  font-family: "Akkurat-Mono";
   font-weight: normal;
   font-style: normal;
   src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot");
-  src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot?#iefix") format("embedded-opentype"), url("http://assets.paperjs.org/fonts/akkurat-mono.woff") format("woff"), url("http://assets.paperjs.org/fonts/akkurat-mono.ttf") format("truetype"), url("http://assets.paperjs.org/fonts/akkurat-mono.svg#AkkuratMono") format("svg"); }
+  src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot?#iefix") format("embedded-opentype"), url("http://assets.paperjs.org/fonts/akkurat-mono.woff") format("woff"), url("http://assets.paperjs.org/fonts/akkurat-mono.ttf") format("truetype"), url("http://assets.paperjs.org/fonts/akkurat-mono.svg#Akkurat-Mono") format("svg"); }
 
 [class^="icon-"]:before,
 [class*=" icon-"]:before {
@@ -145,7 +145,7 @@ img {
 .paperscript .ace_gutter,
 .paperscript .ace_editor,
 .paperscript .console .content {
-  font-family: "AkkuratMono", Menlo, Consolas, "Vera Mono", monospace;
+  font-family: "Akkurat-Mono", Menlo, Consolas, "Vera Mono", monospace;
   font-size: 13px;
   line-height: 18px; }
 .paperscript .ace_gutter-cell {

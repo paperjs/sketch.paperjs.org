@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="paper.js"></script>
+    <script type="text/paperscript">
+    // The amount of symbol we want to place;
+    var MyClass = paper.Base.extend({
+        initialize: function() {
+            this._value = 0;
+        },
+
+        getValueBean: function() {
+            return this._value;
+        },
+
+        setValueBean: function(value) {
+            this._value = value;
+        },
+
+        get valueAccessor() {
+          return this._value;  
+        },
+
+        set valueAccessor(value) {
+            this._value = value;        
+        }
+    });
+
+    // alert(scope);
+
+    var count = 1000000;
+
+    var obj = new MyClass();
+    var time;
+
+    function start() {
+        obj._value = 0;
+        time = Date.now();
+    }
+
+    function report(property) {
+        if (obj._value === count * 2) {
+            console.log(property, Date.now() - time);
+        } else {
+            console.error(poperty + ' value did not add up.');
+        }
+    }
+
+    for (var c = 0; c < 1; c++) {
+        console.log('-- Loop', c, '--');
+        start();
+        for (var i = 0; i < count; i++)
+            obj._value += 2;
+        report('#_value');
+        
+        start();
+        for (var i = 0; i < count; i++)
+            obj.setValueBean(obj.getValueBean() + 2);
+        report('#getValueBean()');
+        
+        start();
+        for (var i = 0; i < count; i++)
+            obj.valueBean += 2;
+        report('#valueBean');
+        
+        start();
+        for (var i = 0; i < count; i++)
+            obj.valueAccessor += 2;
+        report('#valueAccessor');
+    }
+
+    function onFrame() {
+        alert('hi');
+    }
+    </script>
+</head>
+<body>
+</body>
+</html>
