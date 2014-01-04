@@ -358,16 +358,6 @@ function createPaperScript(element) {
 			error = match[1] + match[3];
 			lineNumber = match[2];
 		}
-		if (window.chrome) {
-			// Chrome shifts line-numbers in error messages by one if we
-			// compile functions. The other browsers don't
-			lineNumber--;
-			// Chrome includes a weird empty block comment on a new line at the
-			// end of the parameters list, which further shifts line numbers by
-			// one.
-			if (/\n\/\*\*\//.test(Function('a', '')))
-				lineNumber--;
-		}
 		if (lineNumber) {
 			var annotation = { 
 				row: lineNumber - 1, 

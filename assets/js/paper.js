@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sat Jan 4 19:01:17 2014 +0100
+ * Date: Sat Jan 4 21:57:29 2014 +0100
  *
  ***
  *
@@ -607,27 +607,13 @@ var Callback = {
 		if (!handlers)
 			return false;
 		var args = [].slice.call(arguments, 1),
-			PaperScript = paper.PaperScript,
-			handleException = PaperScript && PaperScript.handleException,
 			that = this;
-
-		function callHandlers() {
-			for (var i in handlers) {
-				if (handlers[i].apply(that, args) === false
-						&& event && event.stop) {
-					event.stop();
-					break;
-				}
+		for (var i in handlers) {
+			if (handlers[i].apply(that, args) === false
+					&& event && event.stop) {
+				event.stop();
+				break;
 			}
-		}
-		if (handleException) {
-			try {
-				callHandlers();
-			} catch (e) {
-				handleException(e);
-			}
-		} else {
-			callHandlers();
 		}
 		return true;
 	},
@@ -12239,11 +12225,11 @@ var PaperScript = Base.exports.PaperScript = (function() {
 					? new Tool()
 					: null,
 			toolHandlers = tool ? tool._events : [],
-			handlers = ['onFrame', 'onResize'].concat(toolHandlers),
-			res;
+			handlers = ['onFrame', 'onResize'].concat(toolHandlers);
 		code = compile(code);
 		var params = ['_$_', '$_', 'view', 'tool'],
-			args = [_$_, $_ , view, tool];
+			args = [_$_, $_ , view, tool],
+			func;
 		for (var key in scope) {
 			if (!/^_/.test(key)) {
 				params.push(key);
@@ -12255,27 +12241,21 @@ var PaperScript = Base.exports.PaperScript = (function() {
 			this.push(key + ': ' + key);
 		}, []).join(', ');
 		code += '\nreturn { ' + handlers + ' };';
-		if (window.InstallTrigger) { 
-			code = ';' + code;
-			var handle = PaperScript.handleException;
-			if (!handle) {
-				handle = PaperScript.handleException = function(e) {
-					throw e.lineNumber >= lineNumber
-							? new Error(e.message, e.fileName,
-								e.lineNumber - lineNumber)
-							: e;
-				};
-				var lineNumber = new Error().lineNumber;
-				lineNumber += (new Error().lineNumber - lineNumber) * 3;
-			}
-			try {
-				res = Function(params, code).apply(scope, args);
-			} catch (e) {
-				handle(e);
-			}
+		if (window.InstallTrigger || window.chrome) { 
+			var script = document.createElement('script'),
+				head = document.head;
+			if (!window.chrome)
+				code = '\n' + code;
+			script.appendChild(document.createTextNode(
+				'paper._execute = function(' + params + ') {' + code + '\n}'
+			));
+			head.appendChild(script);
+			func = paper._execute;
+			head.removeChild(script);
 		} else {
-			res = Function(params, code).apply(scope, args);
+			func = Function(params, code);
 		}
+		var res = func.apply(scope, args);
 		Base.each(toolHandlers, function(key) {
 			var value = res[key];
 			if (value)
