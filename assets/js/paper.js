@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sat Jan 4 21:57:29 2014 +0100
+ * Date: Sat Jan 4 22:22:19 2014 +0100
  *
  ***
  *
@@ -12225,17 +12225,22 @@ var PaperScript = Base.exports.PaperScript = (function() {
 					? new Tool()
 					: null,
 			toolHandlers = tool ? tool._events : [],
-			handlers = ['onFrame', 'onResize'].concat(toolHandlers);
-		code = compile(code);
-		var params = ['_$_', '$_', 'view', 'tool'],
-			args = [_$_, $_ , view, tool],
+			handlers = ['onFrame', 'onResize'].concat(toolHandlers),
+			params = [],
+			args = [],
 			func;
-		for (var key in scope) {
-			if (!/^_/.test(key)) {
-				params.push(key);
-				args.push(scope[key]);
+		code = compile(code);
+		function expose(scope, hidden) {
+			for (var key in scope) {
+				if ((hidden || !/^_/.test(key)) && new RegExp(
+						'\\b' + key.replace(/\$/g, '\\$') + '\\b').test(code)) {
+					params.push(key);
+					args.push(scope[key]);
+				}
 			}
 		}
+		expose({ _$_: _$_, $_: $_, view: view, tool: tool }, true);
+		expose(scope);
 		handlers = Base.each(handlers, function(key) {
 			if (new RegExp('\\s+' + key + '\\b').test(code)) {
 				params.push(key);

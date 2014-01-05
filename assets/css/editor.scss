@@ -44,6 +44,10 @@ body {
 	line-height: 20px;
 	color: #000;
 	overflow: hidden;
+	// Use normal aliasing to make it appear less heavy
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-font-smoothing: antialiased;
+	font-smoothing: antialiased;
 }
 
 select,

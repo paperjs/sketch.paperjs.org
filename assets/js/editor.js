@@ -151,11 +151,23 @@ function createPaperScript(element) {
 				localStorage[getScriptId(script)] = script.code;
 			});
 			var commands = [{
-				name: "execute",
-				bindKey: 'Ctrl-E|Meta-E',
+				name: 'execute',
+				bindKey: {
+					win: 'Ctrl-E',
+					mac: 'Command-E'
+				},
 				exec: function(editor) {
 					$('.button.script-run').trigger('click');
 				}
+			}, {
+				// Dispable settings menu
+				name: 'showSettingsMenu',
+				bindKey: {
+					win: 'Ctrl-,',
+					mac: 'Command-,'
+				},
+				exec: function() {},
+				readOnly: true
 			}/*, {
 				name: "download",
 				bindKey: 'Ctrl-S|Meta-S',
