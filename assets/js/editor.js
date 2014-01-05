@@ -11,13 +11,6 @@ $.extend($.fn, {
 	}
 });
 
-var needsProxy = !/^file:/.test(window.location),
-	proxy = 'http://sketch.paperjs.org/lib/proxy.php?mode=native&url=';
-
-function getProxyURL(url) {
-	return !/^\w+:\/\//.test(url) ? url : proxy + escape(url);
-}
-
 // Import...
 
 var Base = paper.Base,
@@ -31,15 +24,6 @@ var Base = paper.Base,
 	Raster = paper.Raster,
 	Tool = paper.Tool,
 	Component = paper.Component;
-
-if (needsProxy) {
-	// Load external data through proxy, to circumvent cross-domain restrictions
-	Raster.inject({
-		initialize: function(url, pointOrMatrix) {
-			return this.base(getProxyURL(url), pointOrMatrix);
-		}
-	});
-}
 
 // Tell the color component to use a normal text input, so it can receive rgba()
 // values. We're going to replace it with spectrum.js anyhow.
@@ -122,10 +106,8 @@ scripts.push(script);
 function createPaperScript(element) {
 	var runButton = $('.button.script-run', element),
 		canvas = $('canvas', element),
-		showSplit = element.hasClass('split'),
-		sourceFirst = element.hasClass('source'),
 		consoleContainer = $('.console', element).orNull(),
-		editor = null,
+		editor,
 		session,
 		tools = $('.tools', element),
 		inspectorInfo = $('.toolbar .info', element),
@@ -134,91 +116,98 @@ function createPaperScript(element) {
 		customAnnotations = [],
 		ignoreAnnotation = false;
 
-	function showSource(show) {
-		source.toggleClass('hidden', !show);
-		if (show && !editor) {
-			editor = ace.edit(source.find('.editor')[0]);
-			editor.setTheme('ace/theme/bootstrap');
-			editor.setShowInvisibles(false);
-			editor.setDisplayIndentGuides(true);
-			session = editor.getSession();
-			session.setValue(script.code);
-			session.setMode('ace/mode/javascript');
-			session.setUseSoftTabs(true);
-			session.setTabSize(4);
-			session.on('change', function() {
-				script.code = editor.getValue();
-				localStorage[getScriptId(script)] = script.code;
-			});
-			var commands = [{
-				name: 'execute',
-				bindKey: {
-					win: 'Ctrl-E',
-					mac: 'Command-E'
-				},
-				exec: function(editor) {
-					$('.button.script-run').trigger('click');
-				}
-			}, {
-				// Dispable settings menu
-				name: 'showSettingsMenu',
-				bindKey: {
-					win: 'Ctrl-,',
-					mac: 'Command-,'
-				},
-				exec: function() {},
-				readOnly: true
-			}/*, {
-				name: "download",
-				bindKey: 'Ctrl-S|Meta-S',
-				exec: function(editor) {
-					var link = $('.button.script-download');
-					link.trigger('click');
-					window.open(link.attr('href'));
-				}
-			}*/];
-			editor.commands.addCommands(commands);
+	editor = ace.edit(source.find('.editor')[0]);
+	editor.setTheme('ace/theme/bootstrap');
+	editor.setShowInvisibles(false);
+	editor.setDisplayIndentGuides(true);
+	session = editor.getSession();
+	session.setValue(script.code);
+	session.setMode('ace/mode/javascript');
+	session.setUseSoftTabs(true);
+	session.setTabSize(4);
 
-			editor.setKeyboardHandler({
-				handleKeyboard: function(data, hashId, keyString, keyCode, event) {
-					if (event)
-						event.stopPropagation();
-				}
-			});
-			/*
-			// This does not seem to work yet in Ace, but should soon:
-			session.$worker.send("setOptions", {
-				evil: true,
-				regexdash: true,
-				browser: true,
-				wsh: true,
-				trailing: false,
-				smarttabs: true,
-				sub: true,
-				supernew: true,
-				laxbreak: true,
-				eqeqeq: false,
-				eqnull: true,
-				loopfunc: true,
-				boss: true,
-				shadow: true
-			});
-			*/
-			// We need to listen to changes in annotations, since the javascript
-			// worker changes annotations asynchronously, and would get rid of
-			// annotations that we added ourselves (customAnnotations)
-			session.on('changeAnnotation', function() {
-				if (ignoreAnnotation)
-					return;
-				var annotations = getAnnotations();
-				filterAnnotations(annotations);
-				if (customAnnotations.length > 0)
-					annotations = annotations.concat(customAnnotations);
-				setAnnotations(annotations);
-				updateHash();
-			});
+	editor.commands.addCommands([{
+		name: 'execute',
+		bindKey: {
+			mac: 'Command-E',
+			win: 'Ctrl-E'
+		},
+		exec: function(editor) {
+			$('.button.script-run').trigger('click');
 		}
-	}
+	}, {
+		// Dispable settings menu
+		name: 'showSettingsMenu',
+		bindKey: {
+			mac: 'Command-,',
+			win: 'Ctrl-,'
+		},
+		exec: function() {},
+		readOnly: true
+	}/*, {
+		name: "download",
+		bindKey: {
+			mac: 'Command-S',
+			win: 'Ctrl-S'
+		},
+		exec: function(editor) {
+			var link = $('.button.script-download');
+			link.trigger('click');
+			window.open(link.attr('href'));
+		}
+	}*/]);
+
+	editor.setKeyboardHandler({
+		handleKeyboard: function(data, hashId, keyString, keyCode, event) {
+			if (event)
+				event.stopPropagation();
+		}
+	});
+
+	session.on('change', function() {
+		// Clear custom annotations whenever the code changes, until next
+		// execution.
+		if (customAnnotations.length > 0) {
+			removeAnnotations(customAnnotations);
+			customAnnotations = [];
+		}
+		script.code = editor.getValue();
+		localStorage[getScriptId(script)] = script.code;
+	});
+
+	session.on('changeMode', function() {
+		// Use the same linting settings as the Paper.js project
+		session.$worker.send('setOptions', {
+			evil: true,
+			regexdash: true,
+			browser: true,
+			wsh: true,
+			trailing: false,
+			smarttabs: true,
+			sub: true,
+			supernew: true,
+			laxbreak: true,
+			eqeqeq: false,
+			eqnull: true,
+			loopfunc: true,
+			boss: true,
+			shadow: true
+		});
+	});
+
+	// We need to listen to changes in annotations, since the javascript
+	// worker changes annotations asynchronously, and would get rid of
+	// annotations that we added ourselves (customAnnotations)
+	session.on('changeAnnotation', function() {
+		if (ignoreAnnotation)
+			return;
+		var annotations = getAnnotations();
+		filterAnnotations(annotations);
+		if (customAnnotations.length > 0)
+			annotations = annotations.concat(customAnnotations);
+		setAnnotations(annotations);
+		updateHash();
+	});
 
 	function getAnnotations() {
 		return session.getAnnotations();
@@ -236,7 +225,7 @@ function createPaperScript(element) {
 			if (/^Use '[=!]=='/.test(text) 
 					|| /is already defined/.test(text)
 					|| /Missing semicolon/.test(text)
-					|| /'debugger' statements/.test(text)) {
+					|| /'debugger' statement/.test(text)) {
 				annotations.splice(i, 1);
 			}
 		}
@@ -327,25 +316,23 @@ function createPaperScript(element) {
 			consoleContainer.scrollTop(consoleContainer.prop('scrollHeight'));
 		}
 
-		$.extend(scope, {
-			console: {
-				log: function() {
-					print('line', arguments);
-				},
+		scope.console = {
+			log: function() {
+				print('line', arguments);
+			},
 
-				error: function() {
-					print('line error', arguments);
-				},
+			error: function() {
+				print('line error', arguments);
+			},
 
-				warn: function() {
-					print('line warn', arguments);
-				},
+			warn: function() {
+				print('line warn', arguments);
+			},
 
-				clear: function() {
-					consoleContainer.children().remove();
-				}
+			clear: function() {
+				consoleContainer.children().remove();
 			}
-		});
+		};
 	}
 
 	function clearConsole() {
@@ -354,7 +341,7 @@ function createPaperScript(element) {
 	}
 
 	function updateView() {
-		if (scope.view)
+		if (scope && scope.view)
 			scope.view.draw(true);
 	}
 
@@ -392,19 +379,6 @@ function createPaperScript(element) {
 			request: function(options) {
 				var url = options.url,
 					nop = function() {};
-				if (needsProxy) {
-					// Load external data through proxy, to circumvent
-					// cross-domain restrictions
-					var address = url;
-					if (options.data && /^get|$/i.test(options.method)) {
-						// We need to pass all get values in the url
-						var params = [];
-						for (var key in options.data)
-							params.push(key + '=' + escape(options.data[key]));
-						address += (/\?/.test(url) ? '&' : '?') + params.join('&');
-					}
-					options.url = getProxyURL(address);
-				}
 				return $.ajax($.extend({
 					dataType: (url.match(/\.(json|xml|html)$/) || [])[1],
 					success: function(data) {
@@ -452,7 +426,6 @@ function createPaperScript(element) {
 					scope.console.error('Cannot load ' + path + ': ' + error);
 				});
 			} else {
-				setupLibraries();
 				evaluateCode();
 			}
 		}
@@ -461,21 +434,8 @@ function createPaperScript(element) {
 		load();
 	}
 
-	function setupLibraries() {
-		// Patch createSound so it's using the proxy
-		if (window.soundManager && needsProxy) {
-			var createSound = soundManager.createSound;
-			soundManager.createSound = function(options, url) {
-				if (url !== undefined)
-					options = { id: options, url: url };
-				options.url = getProxyURL(options.url);
-				return createSound.call(soundManager, options);
-			};
-		}
-	}
-
 	function cleanupLibraries() {
-		// Didn't find a better way for this yet...
+		// TODO: Use IFRAME instead!
 		if (window.soundManager) {
 			$('#' + soundManager.id).remove();
 			delete window.soundManager;
@@ -679,18 +639,10 @@ function createPaperScript(element) {
 
 	canvas.parents('.split-pane').on('splitter.resize', function() {
 		var pane = $('.canvas', element);
-		if (scope.view) {
+		if (scope && scope.view) {
 			scope.view.setViewSize(pane.width(), pane.height());
 		}
 	});
-
-	function toggleView() {
-		var show = source.hasClass('hidden');
-		canvas.toggleClass('hidden', show);
-		showSource(show);
-		if (!show)
-			runCode();
-	}
 
 	$(window).resize(function() {
 		// Do not have .paperscript automatically resize to 100%, instead
@@ -705,22 +657,12 @@ function createPaperScript(element) {
 	if (window.location.search != '?fix')
 		$(window).load(runCode);
 
-	if (showSplit) {
-		showSource(true);
-	} else if (sourceFirst) {
-		toggleView();
-	}
-
 	$('.button', element).mousedown(function() {
 		return false;
 	});
 
 	runButton.click(function() {
-		if (showSplit) {
-			runCode();
-		} else {
-			toggleView();
-		}
+		runCode();
 		return false;
 	});
 
@@ -757,9 +699,7 @@ function createPaperScript(element) {
 $(function() {
 	if (window.location.search === '?large')
 		$('body').addClass('large');
-	$('.paperscript').each(function() {
-		createPaperScript($(this));
-	});
+	createPaperScript($('.paperscript'));
 });
 
 })();
