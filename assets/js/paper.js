@@ -9,7 +9,7 @@
  *
  * All rights reserved.
  *
- * Date: Sat Jan 4 22:22:19 2014 +0100
+ * Date: Sun Jan 5 05:10:42 2014 +0100
  *
  ***
  *
@@ -8588,8 +8588,8 @@ var Color = Base.extend(new function() {
 		},
 
 		'hsb-rgb': function(h, s, b) {
-			var h = (h / 60) % 6, 
-				i = Math.floor(h), 
+			h = (((h / 60) % 6) + 6) % 6;
+			var i = Math.floor(h), 
 				f = h - i,
 				i = hsbIndices[i],
 				v = [
@@ -8618,7 +8618,7 @@ var Color = Base.extend(new function() {
 		},
 
 		'hsl-rgb': function(h, s, l) {
-			h /= 360;
+			h = (((h / 360) % 1) + 1) % 1;
 			if (s === 0)
 				return [l, l, l];
 			var t3s = [ h + 1 / 3, h, h - 1 / 3 ],
@@ -8855,29 +8855,15 @@ var Color = Base.extend(new function() {
 				this._owner._changed(17);
 		},
 
-		_clamp: function() {
-			var components = this._components.slice(),
-				properties = this._properties;
-			if (this._type !== 'gradient') {
-				for (var i = 0, l = properties.length; i < l; i++) {
-					var value = components[i];
-					components[i] = properties[i] === 'hue'
-							? ((value % 360) + 360) % 360
-							: value < 0 ? 0 : value > 1 ? 1 : value;
-				}
-			}
-			return components;
-		},
-
 		_convert: function(type) {
 			var converter;
 			return this._type === type
 					? this._components.slice()
 					: (converter = converters[this._type + '-' + type])
-						? converter.apply(this, this._clamp())
+						? converter.apply(this, this._components)
 						: converters['rgb-' + type].apply(this,
 							converters[this._type + '-rgb'].apply(this,
-								this._clamp()));
+								this._components));
 		},
 
 		convert: function(type) {

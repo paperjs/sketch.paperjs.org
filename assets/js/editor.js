@@ -268,8 +268,10 @@ function createPaperScript(element) {
 
 	if (consoleContainer) {
 		// Append to a container inside the console, so css can use :first-child
-		consoleContainer = $('<div class="content"/>').appendTo(consoleContainer);
+		consoleContainer = $('<div class="content">').appendTo(consoleContainer);
 	}
+
+	var realConsole = window.console;
 
 	function setupConsole() {
 		if (!consoleContainer)
@@ -292,11 +294,15 @@ function createPaperScript(element) {
 				} else if (Base.isPlainObject(obj)) {
 					if (indent != null)
 						indent += '  ';
-					return (indent ? '{\n' : '{') + Base.each(obj, function(value, key) {
-						this.push(indent + key + ': ' + toString(value, indent, true));
-					}, []).join(indent != null ? ',\n' : ', ') + (indent
-						? '\n' + indent.substring(0, indent.length - 2) + '}'
-						: ' }');
+					return (indent ? '{\n' : '{')
+							+ Base.each(obj, function(value, key) {
+								this.push(indent + key + ': '
+										+ toString(value, indent, true));
+							}, []).join(indent != null ? ',\n' : ', ')
+							+ (indent
+								? '\n' + indent.substring(0, indent.length - 2)
+									+ '}'
+								: ' }');
 				} else if (typeof obj.length === 'number') {
 					return '[ ' + Base.each(obj, function(value, index) {
 						this[index] = toString(value, indent, true);
@@ -306,27 +312,31 @@ function createPaperScript(element) {
 			return obj.toString();
 		}
 
-		function print(className, args) {
-			$('<div/>')
-				.addClass(className)
+		function print(action, args) {
+			// Log to the real console as well
+			var func = realConsole[action];
+			if (func)
+				func.apply(realConsole, args);
+			$('<div>')
+				.addClass('line ' + action)
 				.text(Base.each(args, function(arg) {
-									this.push(toString(arg, ''));
-								}, []).join(' '))
+						this.push(toString(arg, ''));
+					}, []).join(' '))
 				.appendTo(consoleContainer);
 			consoleContainer.scrollTop(consoleContainer.prop('scrollHeight'));
 		}
 
 		scope.console = {
 			log: function() {
-				print('line', arguments);
+				print('log', arguments);
 			},
 
 			error: function() {
-				print('line error', arguments);
+				print('error', arguments);
 			},
 
 			warn: function() {
-				print('line warn', arguments);
+				print('warn', arguments);
 			},
 
 			clear: function() {
@@ -396,8 +406,6 @@ function createPaperScript(element) {
 		};
 	}
 
-	var originalConsole = window.console;
-
 	function parseInclude() {
 		var includes = [];
 		// Parse code for includes, and load them synchronously, if present
@@ -427,9 +435,9 @@ function createPaperScript(element) {
 				});
 			} else {
 				evaluateCode();
+				window.console = realConsole;
 			}
 		}
-		window.console = originalConsole;
 		cleanupLibraries();
 		load();
 	}
@@ -483,15 +491,15 @@ function createPaperScript(element) {
 					var text;
 					if (selection instanceof Segment) {
 						text = 'Segment';
-						text += '<br />point: ' + selection.point;
+						text += '<br>point: ' + selection.point;
 						if (!selection.handleIn.isZero())
-							text += '<br />handleIn: ' + selection.handleIn;
+							text += '<br>handleIn: ' + selection.handleIn;
 						if (!selection.handleOut.isZero())
-							text += '<br />handleOut: ' + selection.handleOut;
+							text += '<br>handleOut: ' + selection.handleOut;
 					} else {
 						text = selection.constructor.name;
-						text += '<br />position: ' + selection.position;
-						text += '<br />bounds: ' + selection.bounds;
+						text += '<br>position: ' + selection.position;
+						text += '<br>bounds: ' + selection.bounds;
 					}
 					inspectorInfo.html(text);
 				}
@@ -520,7 +528,6 @@ function createPaperScript(element) {
 				if (event.modifiers.option)
 					factor = 1 / factor;
 				paper.view.center = event.point;
-				// paper.view.center = paper.view.center - event.point.subtract(paper.view.center) / factor;
 				paper.view.zoom *= factor;
 			},
 			keydown: function(event) {
@@ -538,9 +545,10 @@ function createPaperScript(element) {
 			mousedrag: function(event) {
 				if (event.modifiers.space) {
 					body.addClass('zoom-grab');
-					// In order to have coordinate changes not mess up the dragging,
-					// we need to convert coordinates to view space, and then 
-					// back to project space after the view space has changed.
+					// In order to have coordinate changes not mess up the
+					// dragging, we need to convert coordinates to view space,
+					// and then back to project space after the view space has
+					// changed.
 					var point = paper.view.projectToView(event.point),
 						last = paper.view.viewToProject(lastPoint);
 					paper.view.scrollBy(last.subtract(event.point));
@@ -626,7 +634,9 @@ function createPaperScript(element) {
 	panes.each(function() {
 		var pane = $(this);
 		pane.split({
-			orientation: pane.attr('data-orientation') == 'hor' ? 'vertical' : 'horizontal',
+			orientation: pane.attr('data-orientation') == 'hor'
+				? 'vertical'
+				: 'horizontal',
 			position: pane.attr('data-percentage'),
 			limit: 100
 		});
@@ -684,7 +694,8 @@ function createPaperScript(element) {
 	});
 
 	$('.button.canvas-clear', element).click(function() {
-		if (!paper.project.isEmpty() && confirm('This clears the whole canvas.\nAre you sure to proceed?')) {
+		if (!paper.project.isEmpty() && confirm(
+				'This clears the whole canvas.\nAre you sure to proceed?')) {
 			scope.project.clear();
 			new Layer();
 			updateView();
