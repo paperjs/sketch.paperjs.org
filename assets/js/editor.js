@@ -1,4 +1,8 @@
 (function() {
+// Settings
+
+var hitTolerance = 4;
+
 // Install some useful jQuery extensions that we use a lot
 
 $.extend($.fn, {
@@ -599,17 +603,18 @@ function createPaperScript(element) {
 		inspectorTool.on({
 			mousedown: function(event) {
 				deselect();
-				var selection = event.item;
+				var result = scope.project.hitTest(event.point, {
+					tolerance: hitTolerance,
+					fill: true,
+					stroke: true,
+					segments: true
+				});
+				var selection = result && result.item;
 				if (selection) {
-					var handle = selection.hitTest(event.point, {
-						segments: true,
-						tolerance: 4
-					});
-					if (handle && handle.type !== 'segment')
-						handle = null;
+					var handle = result.type === 'segment';
 					selection.bounds.selected = !handle;
 					if (handle)
-						selection = handle.segment;
+						selection = result.segment;
 					selection.selected = true;
 				}
 				inspectorInfo.toggleClass('hidden', !selection);
@@ -654,8 +659,8 @@ function createPaperScript(element) {
 				var factor = 1.25;
 				if (event.modifiers.option)
 					factor = 1 / factor;
-				paper.view.center = event.point;
 				paper.view.zoom *= factor;
+				paper.view.center = event.point;
 			},
 			keydown: function(event) {
 				if (event.key === 'option')
