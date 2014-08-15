@@ -243,7 +243,9 @@ function createPaperScript(element) {
 			var text = annotations[i].text;
 			if (/^Use '[=!]=='/.test(text) 
 					|| /is already defined/.test(text)
+					|| /Redefinition of/.test(text)
 					|| /Missing semicolon/.test(text)
+					|| /Unnecessary semicolon/.test(text)
 					|| /'debugger' statement/.test(text)) {
 				annotations.splice(i, 1);
 			}
