@@ -142,9 +142,21 @@ img {
 .paperscript .ace_gutter {
   border-right: 1px solid #999; }
 .paperscript .ace_gutter-cell {
-  padding-left: 14px; }
+  padding-left: 14px;
+  position: relative; }
   .paperscript .ace_gutter-cell.ace_error, .paperscript .ace_gutter-cell.ace_warning {
     background-position: 0 center; }
+  .paperscript .ace_gutter-cell.ace_breakpoint:before {
+    display: block;
+    position: absolute;
+    content: '';
+    left: 4px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background: #f30;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
 .paperscript .ace_gutter,
 .paperscript .ace_editor,
 .paperscript .console .content {

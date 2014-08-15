@@ -41,7 +41,8 @@ function encode(string) {
 
 var script = {
 	name: 'Sketch',
-	code: ''
+	code: '',
+	breakpoints: []
 };
 
 function getScriptId(script) {
@@ -97,6 +98,9 @@ if (!script.code) {
 	);
 }
 
+if (!script.breakpoints)
+	script.breakpoints = [];
+
 if (!script.name || script.name == 'First Script')
 	script.name = 'Sketch';
 
@@ -125,6 +129,7 @@ function createPaperScript(element) {
 	session.setMode('ace/mode/javascript');
 	session.setUseSoftTabs(true);
 	session.setTabSize(4);
+	session.setBreakpoints(script.breakpoints);
 
 	editor.commands.addCommands([{
 		name: 'execute',
@@ -162,6 +167,20 @@ function createPaperScript(element) {
 			if (event)
 				event.stopPropagation();
 		}
+	});
+
+	editor.on('guttermousedown', function(event) { 
+	    var target = $(event.domEvent.target); 
+	    if (!target.hasClass('ace_gutter-cell'))
+	        return;
+	    session.setBreakpoint(event.getDocumentPosition().row,
+	    		target.hasClass('ace_breakpoint') ? '' : 'ace_breakpoint');
+	    // Keep script.breakpoints up to date:
+		script.breakpoints = [];
+		for (var i in session.getBreakpoints())
+			script.breakpoints.push(i);
+		updateHash();
+	    event.stop();
 	});
 
 	session.on('change', function() {
@@ -240,9 +259,115 @@ function createPaperScript(element) {
 		setAnnotations(annotations);
 	}
 
+	function preprocessCode(code, breakpoints) {
+		breakpoints = breakpoints.slice(); // Clone since it'll be modified.
+		var insertions = [];
+
+		function getOffset(offset) {
+			for (var i = 0, l = insertions.length; i < l; i++) {
+				var insertion = insertions[i];
+				if (insertion[0] >= offset)
+					break;
+				offset += insertion[1];
+			}
+			return offset;
+		}
+
+		function getCode(node) {
+			return code.substring(getOffset(node.range[0]),
+					getOffset(node.range[1]));
+		}
+
+		function replaceCode(node, str) {
+			var start = getOffset(node.range[0]),
+				end = getOffset(node.range[1]),
+				insert = 0;
+			for (var i = insertions.length - 1; i >= 0; i--) {
+				if (start > insertions[i][0]) {
+					insert = i + 1;
+					break;
+				}
+			}
+			insertions.splice(insert, 0, [start, str.length - end + start]);
+			code = code.substring(0, start) + str + code.substring(end);
+		}
+
+		// Recursively walks the AST and replaces the code of certain nodes
+		function walkAST(node, parent) {
+			if (!node)
+				return;
+			var type = node.type,
+				loc = node.loc;
+			// if (node.range) {
+			// 	var part = getCode(node);
+			// 	if (part && part.length > 20)
+			// 		part = part.substr(0, 10) + '...' + part.substr(-10);
+			// 	console.log(type, part);
+			// }
+
+			// The easiest way to walk through the whole AST is to simply loop
+			// over each property of the node and filter out fields we don't
+			// need to consider...
+			for (var key in node) {
+				if (key === 'range' || key === 'loc')
+					continue;
+				var value = node[key];
+				if (Array.isArray(value)) {
+					for (var i = 0, l = value.length; i < l; i++)
+						walkAST(value[i], node);
+				} else if (value && typeof value === 'object') {
+					// We cannot use Base.isPlainObject() for these since
+					// Acorn.js uses its own internal prototypes now.
+					walkAST(value, node);
+				}
+			}
+			// See if a breakpoint is to be placed in the range of this
+			// node, and if the node type supports it.
+			if (breakpoints.length > 0 && loc
+					// Filter the type of nodes that support setting breakpoints.
+					&& /^(ForStatement|VariableDeclaration|ExpressionStatement|ReturnStatement)$/.test(type)
+					// Filter out variable definitions inside ForStatement.
+					&& parent.type !== 'ForStatement') {
+				var start = loc.start.line - 1,
+					end = loc.end.line - 1;
+				for (var i = 0, l = breakpoints.length; i < l; i++) {
+					var line = breakpoints[i];
+					if (line >= start && line <= end) {
+						replaceCode(node, 'debugger; ' + getCode(node));
+						breakpoints.splice(i, 1);
+						break;
+					}
+				}
+			}
+		}
+
+		walkAST(PaperScript.parse(code, { ranges: true, locations: true }));
+
+		if (breakpoints.length > 0) {
+			var lines = code.split(/\r\n|\n|\r/mg);
+			for (var i = 0; i < breakpoints.length; i++) {
+				var line = breakpoints[i],
+					str = lines[line];
+				if (!/\bdebugger;\b/.test(str))
+					lines[line] = 'debugger; ' + str;
+			}
+			code = lines.join('\n');
+		}
+
+		return code;
+	}
+
 	function evaluateCode() {
 		scope.setup(canvas[0]);
-		scope.execute(script.code);
+		// Create an array of indices for breakpoints and pass it on.
+		var loc = document.location,
+			baseUrl = loc.protocol + '//' + loc.host + loc.pathname;
+			url = /*baseUrl +*/ script.name + '_' + getTimeStamp() + '.js';
+		//url = '';
+		var code = preprocessCode(script.code, script.breakpoints);
+		scope.execute(code, url, {
+			source: script.code
+		});
 		createInspector();
 		setupTools();
 		setupPalettes();
