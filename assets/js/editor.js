@@ -384,10 +384,7 @@ function createPaperScript(element) {
 		updateHash();
 		removeAnnotations(customAnnotations);
 		customAnnotations = [];
-		// In order to be able to install our own error handlers first, we are
-		// not relying on automatic script loading, which is disabled by the use
-		// of data-paper-ignore="true". So we need to create a new paperscope
-		// each time.
+		// Create a new paperscope each time.
 		if (scope)
 			scope.remove();
 		scope = new PaperScope();
