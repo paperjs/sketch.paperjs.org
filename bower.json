@@ -1,0 +1,21 @@
+{
+  "name": "sketch.paperjs.org",
+  "version": "0.0.1",
+  "description": "Online Code Editor for Paper.js",
+  "authors": [
+    "Jürg Lehni <juerg@scratchdisk.com>"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components"
+  ],
+  "dependencies": {
+    "paper": "^0.9.20",
+    "jquery": "~2.1.1",
+    "ace-builds": "~1.1.7",
+    "jszip-mirror": "~2.4.0",
+    "base64": "~0.3.0",
+    "spectrum": "~1.1.2"
+  }
+}

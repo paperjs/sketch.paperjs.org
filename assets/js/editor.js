@@ -33,7 +33,24 @@ var Base = paper.Base,
 // values. We're going to replace it with spectrum.js anyhow.
 Component.prototype._types.color.type = 'text';
 
+/*
 // URL Encoding
+function decode(string) {
+	var t = Date.now();
+	var res = JSZip.utils.uint8Array2String(
+		JSZip.compressions.DEFLATE.uncompress(JSZip.base64.decode(string)));
+	alert(Date.now() - t);
+	return res;
+}
+
+function encode(string) {
+	var t = Date.now();
+	var res = JSZip.base64.encode(JSZip.utils.uint8Array2String(
+		JSZip.compressions.DEFLATE.compress(string)));
+	alert(Date.now() - t);
+	return res;
+}
+*/
 
 function decode(string) {
 	return RawDeflate.inflate(window.atob(string));
@@ -85,6 +102,14 @@ if (window.location.hash) {
 			if (console.error)
 				console.error(e);
 		}
+	} else if (version == 'Z/') {
+		try {
+			script = JSON.parse(decode(string));
+			error = false;
+		} catch (e) {
+			if (console.error)
+				console.error(e);
+		}
 	}
 	if (error) {
 		alert('That shared link format is not supported.');
@@ -125,6 +150,7 @@ function createPaperScript(element) {
 		ignoreAnnotation = false;
 
 	editor = ace.edit(source.find('.editor')[0]);
+	ace.config.set('themePath', 'assets/js/ace');
 	editor.setTheme('ace/theme/bootstrap');
 	editor.setShowInvisibles(false);
 	editor.setDisplayIndentGuides(true);

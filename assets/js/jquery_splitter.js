@@ -104,7 +104,7 @@
         this.on('splitter.resize', function() {
             self.position(self.position());
         });
-        // Inital position of splitter
+        // Initial position of splitter
         var m = settings.position.match(/^([0-9]+)(%)?$/),
             max = this[size](),
             pos = m[2] ? Math.round((max * +m[1]) / 100) : settings.position;
