@@ -72,14 +72,33 @@ img {
 .hidden {
   display: none; }
 
+.palettejs-pane tr.hidden {
+  display: table-row;
+  visibility: hidden; }
+.palettejs-pane td.hidden {
+  display: table-cell;
+  visibility: hidden; }
+
+.palettejs-type-slider input {
+  width: 100%;
+  min-width: 100px; }
+
+.palettejs-label {
+  text-align: right; }
+  .palettejs-label label:after {
+    content: ':'; }
+  .palettejs-label label:empty {
+    display: none; }
+
 .paperscript .gui {
   position: absolute;
   right: 0;
-  z-index: 100;
-  display: none; }
+  z-index: 100; }
+.paperscript .gui-context:hover .gui {
+  display: block; }
 .paperscript .button,
 .paperscript .info,
-.paperscript .palettejs-pane {
+.paperscript .palettejs-palette {
   font-size: 11px;
   line-height: 16px;
   padding: 2px 6px;
@@ -96,8 +115,6 @@ img {
   float: right; }
   .paperscript .tools .button {
     float: left; }
-.paperscript .gui-context:hover .gui {
-  display: block; }
 .paperscript .button {
   cursor: pointer; }
   .paperscript .button:hover {

@@ -27,11 +27,55 @@ var Base = paper.Base,
 	Segment = paper.Segment,
 	Raster = paper.Raster,
 	Tool = paper.Tool,
-	Component = paper.Component;
+	Color = paper.Color;
 
 // Tell the color component to use a normal text input, so it can receive rgba()
 // values. We're going to replace it with spectrum.js anyhow.
-Component.prototype._types.color.type = 'text';
+Palette.components.color = {
+	type: 'text',
+
+	create: function() {
+		var that = this;
+		this.input = $(this.element);
+		var canvas = $('.canvas');
+		this.input.spectrum({
+			appendTo: canvas,
+			flat: false,
+			allowEmpty: false,
+			showButtons: true,
+			showInitial: true,
+			showPalette: true,
+			showSelectionPalette: true,
+			showAlpha: true,
+			clickoutFiresChange: true,
+			change: function(value) {
+				that.value = value + '';
+			}
+		});
+		// Hide on mousedown already, not just on click
+		canvas.on('mousedown', function(event) {
+			that.input.spectrum('hide', event);
+		});
+	},
+
+    getValue: function(value) {
+        // Always convert internal string representation back to a paper.js
+        // color object.
+        return new Color(value);
+    },
+
+    setValue: function(value) {
+        return new Color(value).toCSS();
+    },
+
+    setEnabled: function(enabled) {
+    	this.input.spectrum(enabled ? 'enable' : 'disable');
+    },
+
+    setVisible: function(visible) {
+    	this.input.spectrum(visible ? 'show' : 'hide');
+    }
+}
 
 /*
 // URL Encoding
@@ -390,6 +434,9 @@ function createPaperScript(element) {
 	}
 
 	function evaluateCode() {
+		Base.each(Palette.instances, function(palette) {
+			palette.remove();
+		});
 		scope.setup(canvas[0]);
 		// Create an array of indices for breakpoints and pass it on.
 		var loc = document.location,
@@ -402,7 +449,6 @@ function createPaperScript(element) {
 		});
 		createInspector();
 		setupTools();
-		setupPalettes();
 	}
 
 	function runCode() {
@@ -720,39 +766,6 @@ function createPaperScript(element) {
 				body.removeClass('zoom');
 			}
 		});
-	}
-
-	function setupPalettes() {
-		// Loop through all palettes and components, and replace simple HTML5
-		// color choosers with much improved spectrum.js ones.
-		var palettes = paper.palettes;
-		for (var i = 0, l = palettes.length; i < l; i ++) {
-			var palette = palettes[i],
-				components = palette.components;
-			paper.Base.each(components, function(component) {
-				if (component.type == 'color') {
-					var input = $(component._input);
-					input.spectrum({
-						appendTo: $('.canvas'),
-						flat: false,
-						allowEmpty: false,
-						showButtons: true,
-						showInitial: true,
-						showPalette: true,
-						showSelectionPalette: true,
-						showAlpha: true,
-						clickoutFiresChange: true,
-						change: function(value) {
-							component.value = value + '';
-						}
-					});
-					// Hide on mousedown already, not just on click
-					canvas.on('mousedown', function(event) {
-						input.spectrum('hide', event);
-					});
-				}
-			});
-		}
 	}
 
 	function setupTools() {
