@@ -29,9 +29,10 @@ var Base = paper.Base,
 	Tool = paper.Tool,
 	Color = paper.Color;
 
-// Tell the color component to use a normal text input, so it can receive rgba()
-// values. We're going to replace it with spectrum.js anyhow.
+// Override the color component to use spectrum.js to give it an advanced color
+// chooser behavior.
 Palette.components.color = {
+	// Use <input type="text"> for spectrum.js
 	type: 'text',
 
 	create: function() {
