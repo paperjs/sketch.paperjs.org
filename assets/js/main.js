@@ -655,8 +655,6 @@ function createPaperScript(element) {
 		prevSelection;
 
 	function createInspector() {
-		inspectorTool = new Tool();
-		inspectorTool.buttonClass = 'icon-cursor';
 		prevSelection = null;
 
 		function deselect() {
@@ -670,7 +668,9 @@ function createPaperScript(element) {
 			}
 		}
 
-		inspectorTool.on({
+		inspectorTool = new Tool({
+			buttonClass: 'icon-arrow-black'
+		}).on({
 			mousedown: function(event) {
 				deselect();
 				var result = scope.project.hitTest(event.point, {
@@ -718,9 +718,9 @@ function createPaperScript(element) {
 
 		var lastPoint;
 		var body = $('body');
-		zoomTool = new Tool();
-		zoomTool.buttonClass = 'icon-zoom-in';
-		zoomTool.on({
+		zoomTool = new Tool({
+			buttonClass: 'icon-zoom'
+		}).on({
 			mousedown: function(event) {
 				if (event.modifiers.space) {
 					lastPoint = paper.view.projectToView(event.point);

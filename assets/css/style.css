@@ -1,31 +1,9 @@
 @font-face {
-  font-family: "Fontello";
-  font-weight: normal;
-  font-style: normal;
-  src: url("fonts/fontello.eot");
-  src: url("fonts/fontello.eot?#iefix") format("embedded-opentype"), url("fonts/fontello.woff") format("woff"), url("fonts/fontello.ttf") format("truetype"), url("fonts/fontello.svg#Fontello") format("svg"); }
-
-@font-face {
   font-family: "Akkurat-Mono";
   font-weight: normal;
   font-style: normal;
   src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot");
   src: url("http://assets.paperjs.org/fonts/akkurat-mono.eot?#iefix") format("embedded-opentype"), url("http://assets.paperjs.org/fonts/akkurat-mono.woff") format("woff"), url("http://assets.paperjs.org/fonts/akkurat-mono.ttf") format("truetype"), url("http://assets.paperjs.org/fonts/akkurat-mono.svg#Akkurat-Mono") format("svg"); }
-
-[class^="icon-"]:before,
-[class*=" icon-"]:before {
-  font-family: 'Fontello';
-  font-style: normal;
-  font-weight: normal;
-  speak: none;
-  display: inline-block;
-  text-decoration: inherit;
-  width: 1em;
-  text-align: center;
-  font-variant: normal;
-  text-transform: none;
-  line-height: 1em; }
-
 body,
 html,
 .paperscript {
@@ -101,7 +79,7 @@ img {
 .paperscript .palettejs-palette {
   font-size: 11px;
   line-height: 16px;
-  padding: 2px 6px;
+  padding: 2px 3px;
   border-radius: 4px;
   margin: 8px 8px 0 0;
   background: #eee;
@@ -252,3 +230,5 @@ body.large .paperscript .ace_gutter-cell {
     bottom: 0; }
   .splitter_panel .right_panel {
     right: 0; }
+
+/*# sourceMappingURL=editor.css.map */

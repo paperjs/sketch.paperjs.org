@@ -11,8 +11,8 @@
     "bower_components"
   ],
   "dependencies": {
-    "paper": "^0.9.20",
-    "palette": "~0.0.2",
+    "paper": "~0.9.22",
+    "palette": "~0.0.4",
     "jquery": "~2.1.1",
     "ace-builds": "~1.1.7",
     "jszip-mirror": "~2.4.0",

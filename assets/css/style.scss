@@ -1,27 +1,6 @@
-@import 'bourbon/bourbon';
+@import "bourbon/bourbon";
 
-@include font-face("Fontello", "fonts/fontello");
 @include font-face("Akkurat-Mono", "http://assets.paperjs.org/fonts/akkurat-mono");
-
-[class^="icon-"]:before,
-[class*=" icon-"]:before {
-	font-family: 'Fontello';
-	font-style: normal;
-	font-weight: normal;
-	speak: none;
-
-	display: inline-block;
-	text-decoration: inherit;
-	width: 1em;
-	text-align: center;
-
-	// For safety - reset parent styles, that can break glyph codes.
-	font-variant: normal;
-	text-transform: none;
-
-	// Fix buttons height, for twitter bootstrap.
-	line-height: 1em;
-}
 
 body,
 html,
@@ -110,7 +89,7 @@ img {
 			content: ':';
 		}
 
-		// Collapse enmpty labels
+		// Collapse empty labels
 		&:empty {
 			display: none;
 		}
@@ -137,7 +116,7 @@ img {
 	.palettejs-palette {
 		font-size: 11px;
 		line-height: 16px;
-		padding: 2px 6px;
+		padding: 2px 3px;
 		border-radius: 4px;
 		margin: 8px 8px 0 0;
 		background: #eee;
