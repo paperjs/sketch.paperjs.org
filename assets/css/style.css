@@ -71,7 +71,8 @@ img {
 .paperscript .gui {
   position: absolute;
   right: 0;
-  z-index: 100; }
+  z-index: 100;
+  display: none; }
 .paperscript .gui-context:hover .gui {
   display: block; }
 .paperscript .button,
@@ -230,5 +231,3 @@ body.large .paperscript .ace_gutter-cell {
     bottom: 0; }
   .splitter_panel .right_panel {
     right: 0; }
-
-/*# sourceMappingURL=editor.css.map */

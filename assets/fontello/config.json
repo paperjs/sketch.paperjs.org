@@ -89,6 +89,48 @@
       "src": "fontawesome"
     },
     {
+      "uid": "f48ae54adfb27d8ada53d0fd9e34ee10",
+      "css": "trash",
+      "code": 59413,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "1b5a5d7b7e3c71437f5a26befdd045ed",
+      "css": "file",
+      "code": 59445,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "5408be43f7c42bccee419c6be53fdef5",
+      "css": "file-text",
+      "code": 59430,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "9daa1fdf0838118518a7e22715e83abc",
+      "css": "file-pdf",
+      "code": 59441,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "3c961c1a8d874815856fc6637dc5a13c",
+      "css": "file-image",
+      "code": 59444,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "e80ae555c1413a4ec18b33fb348b4049",
+      "css": "file-archive",
+      "code": 59443,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "26613a2e6bc41593c54bead46f8c8ee3",
+      "css": "file-markup",
+      "code": 59442,
+      "src": "fontawesome"
+    },
+    {
       "uid": "f8aa663c489bcbd6e68ec8147dca841e",
       "css": "folder",
       "code": 59439,
@@ -122,6 +164,36 @@
       "uid": "d8d378d0ce413f231dfa37592e39c227",
       "css": "pause",
       "code": 59426,
+      "src": "entypo"
+    },
+    {
+      "uid": "e188c02f740feff7e2d2bce1950b75fa",
+      "css": "record",
+      "code": 59434,
+      "src": "entypo"
+    },
+    {
+      "uid": "0afbb00323696f49e9c47f4d9fe6390b",
+      "css": "to-end",
+      "code": 59415,
+      "src": "entypo"
+    },
+    {
+      "uid": "ceefe7653a4f6edaacce9e7f196cec5a",
+      "css": "to-start",
+      "code": 59399,
+      "src": "entypo"
+    },
+    {
+      "uid": "18f7c393e3532e40edd45607c9d99988",
+      "css": "fast-forward",
+      "code": 59423,
+      "src": "entypo"
+    },
+    {
+      "uid": "85806fd8ab907f45d34f976354a0df23",
+      "css": "fast-backward",
+      "code": 59424,
       "src": "entypo"
     },
     {
@@ -194,18 +266,6 @@
       "uid": "23d1c53bc15ca452df9453450e94a19c",
       "css": "question",
       "code": 59412,
-      "src": "modernpics"
-    },
-    {
-      "uid": "z18zsyvbrpsea0f49kd61kkue1ofsafy",
-      "css": "trash",
-      "code": 59413,
-      "src": "modernpics"
-    },
-    {
-      "uid": "t7uz7sms69yuckjmkp1zqggwr4jkw0o9",
-      "css": "doc",
-      "code": 59414,
       "src": "modernpics"
     },
     {
@@ -284,12 +344,6 @@
       "uid": "d218294e6f9f7191f6b0b3d1ff6239ff",
       "css": "eye-off",
       "code": 59429,
-      "src": "elusive"
-    },
-    {
-      "uid": "05a2f4c4839012434774cc1ceb4c0f9b",
-      "css": "download",
-      "code": 59430,
       "src": "elusive"
     },
     {
