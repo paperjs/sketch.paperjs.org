@@ -163,13 +163,13 @@ if (window.location.hash) {
 if (!script.code) {
 	// Support only one script for now, named 'Untitled'. Later on we'll have
 	// a document switcher.
-	script.code = Base.pick(
-			localStorage[getScriptId(script)],
-			// Try legacy storage
-			localStorage['paperjs_'
-				+ window.location.pathname.match(/\/([^\/]*)$/)[1]],
-			''
-	);
+	// Try legacy storage
+	script.code = localStorage[getScriptId(script)]
+			// Legacy naming
+			// TODO: Remove in 2016:
+			|| localStorage['paperjs_'
+				+ window.location.pathname.match(/\/([^\/]*)$/)[1]]
+			|| '';
 }
 
 if (!script.breakpoints)
