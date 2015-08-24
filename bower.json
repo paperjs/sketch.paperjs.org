@@ -1,6 +1,5 @@
 {
   "name": "sketch.paperjs.org",
-  "version": "0.1.0",
   "description": "Online Code Editor for Paper.js",
   "authors": [
     "Jürg Lehni <juerg@scratchdisk.com>"
