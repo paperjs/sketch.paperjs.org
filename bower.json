@@ -1,6 +1,6 @@
 {
   "name": "sketch.paperjs.org",
-  "version": "0.9.22",
+  "version": "0.1.0",
   "description": "Online Code Editor for Paper.js",
   "authors": [
     "Jürg Lehni <juerg@scratchdisk.com>"
@@ -11,7 +11,7 @@
     "bower_components"
   ],
   "dependencies": {
-    "paper": "~0.9.22",
+    "paper": "~0.9.24",
     "palette": "~0.0.4",
     "jquery": "~2.1.1",
     "ace-builds": "~1.1.7",
