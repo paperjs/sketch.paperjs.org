@@ -10,7 +10,7 @@
     "bower_components"
   ],
   "dependencies": {
-    "paper": "~0.9.24",
+    "paper": "~0.9.25",
     "palette": "~0.0.4",
     "jquery": "~2.1.1",
     "ace-builds": "~1.1.7",
