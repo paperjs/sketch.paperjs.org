@@ -207,6 +207,12 @@ function createPaperScript(element) {
 	session.setTabSize(4);
 	session.setBreakpoints(script.breakpoints);
 
+	// Blur the editor when clicking inside the canvas, to avoid accidentally
+	// erasing code when working with the keyboard.
+	canvas.on('mousedown', function(event) {
+		editor.blur();
+	});
+
 	editor.commands.addCommands([{
 		name: 'execute',
 		bindKey: {
@@ -581,6 +587,7 @@ function createPaperScript(element) {
 			setAnnotations(annotations);
 			customAnnotations.push(annotation);
 			editor.gotoLine(lineNumber, columNumber);
+            editor.focus();
 		}
 		scope.console.error('Line ' + lineNumber + ': ' + error);
 		updateView();
