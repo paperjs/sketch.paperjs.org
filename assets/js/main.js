@@ -195,6 +195,7 @@ function createPaperScript(element) {
 		ignoreAnnotation = false;
 
 	editor = ace.edit(source.find('.editor')[0]);
+	editor.$blockScrolling = Infinity;
 	ace.config.set('themePath', 'assets/js/ace');
 	editor.setTheme('ace/theme/bootstrap');
 	editor.setShowInvisibles(false);
