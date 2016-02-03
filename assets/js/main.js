@@ -277,7 +277,7 @@ function createPaperScript(element) {
 	});
 
 	session.on('changeMode', function() {
-		// Use the same linting settings as the Paper.js project
+		// Use the same relaxed linting settings as the Paper.js project.
 		session.$worker.send('setOptions', {
 			evil: true,
 			regexdash: true,
@@ -450,9 +450,9 @@ function createPaperScript(element) {
 		var loc = document.location,
 			baseUrl = loc.protocol + '//' + loc.host + loc.pathname;
 			url = /*baseUrl +*/ script.name + '_' + getTimeStamp() + '.js';
-		//url = '';
 		var code = preprocessCode(script.code, script.breakpoints);
-		scope.execute(code, url, {
+		scope.execute(code, {
+			url: url,
 			source: script.code
 		});
 		createInspector();
@@ -476,7 +476,8 @@ function createPaperScript(element) {
 
 	if (consoleContainer) {
 		// Append to a container inside the console, so css can use :first-child
-		consoleContainer = $('<div class="content">').appendTo(consoleContainer);
+		consoleContainer = $('<div class="content"/>')
+				.appendTo(consoleContainer);
 	}
 
 	var realConsole = window.console;
@@ -521,11 +522,11 @@ function createPaperScript(element) {
 		}
 
 		function print(action, args) {
-			// Log to the real console as well
+			// Log to the real console as well.
 			var func = realConsole[action];
 			if (func)
 				func.apply(realConsole, args);
-			$('<div>')
+			$('<div/>')
 				.addClass('line ' + action)
 				.text(Base.each(args, function(arg) {
 						this.push(toString(arg, ''));
@@ -735,22 +736,24 @@ function createPaperScript(element) {
 					return;
 				}
 				var factor = 1.25;
-				if (event.modifiers.option)
+				if (event.modifiers.alt)
 					factor = 1 / factor;
 				paper.view.zoom *= factor;
 				paper.view.center = event.point;
 			},
 			keydown: function(event) {
-				if (event.key === 'option')
+				if (event.key === 'alt') {
 					body.addClass('zoom-out');
-				else if (event.key === 'space')
+				} else if (event.key === 'space') {
 					body.addClass('zoom-move');
+				}
 			},
 			keyup: function(event) {
-				if (event.key === 'option')
+				if (event.key === 'alt') {
 					body.removeClass('zoom-out');
-				else if (event.key === 'space')
+				} else if (event.key === 'space') {
 					body.removeClass('zoom-move');
+				}
 			},
 			mousedrag: function(event) {
 				if (event.modifiers.space) {
