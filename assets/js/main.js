@@ -790,7 +790,6 @@ function createPaperScript(element) {
 						button.removeClass('active');
 					}
 				});
-				console.log(buttonClass, activeClass, buttonClass === activeClass)
 				if (activeClass && buttonClass === activeClass) {
 					activeTool = tool;
 					activeClass = null;
