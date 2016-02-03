@@ -12,10 +12,10 @@
   "dependencies": {
     "paper": "~0.9.25",
     "palette": "~0.0.4",
-    "jquery": "~2.1.1",
-    "ace-builds": "~1.1.7",
+    "jquery": "~2.1.4",
+    "ace-builds": "~1.1.9",
     "jszip-mirror": "~2.4.0",
     "base64": "~0.3.0",
-    "spectrum": "~1.1.2"
+    "spectrum": "~1.7.0"
   }
 }
