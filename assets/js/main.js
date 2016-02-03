@@ -559,11 +559,6 @@ function createPaperScript(element) {
 			scope.console.clear();
 	}
 
-	function updateView() {
-		if (scope && scope.view)
-			scope.view.draw(true);
-	}
-
 	// Install an error handler to log the errors in our log too:
 	window.onerror = function(error, url, lineNumber) {
 		var columNumber = 0,
@@ -591,7 +586,6 @@ function createPaperScript(element) {
             editor.focus();
 		}
 		scope.console.error('Line ' + lineNumber + ': ' + error);
-		updateView();
 	};
 
 	function extendScope() {
@@ -609,7 +603,6 @@ function createPaperScript(element) {
 					},
 					complete: function() {
 						(options.onComplete || nop)();
-						updateView();
 					}
 				}, options));
 			}
@@ -648,16 +641,7 @@ function createPaperScript(element) {
 				window.console = realConsole;
 			}
 		}
-		cleanupLibraries();
 		load();
-	}
-
-	function cleanupLibraries() {
-		// TODO: Use IFRAME instead!
-		if (window.soundManager) {
-			$('#' + soundManager.id).remove();
-			delete window.soundManager;
-		}
 	}
 
 	var inspectorTool,
@@ -721,7 +705,6 @@ function createPaperScript(element) {
 				deselect();
 				inspectorInfo.addClass('hidden');
 				inspectorInfo.html('');
-				updateView();
 			}
 		});
 
@@ -886,7 +869,6 @@ function createPaperScript(element) {
 				'This clears the whole canvas.\nAre you sure to proceed?')) {
 			scope.project.clear();
 			new Layer();
-			updateView();
 		}
 	});
 
