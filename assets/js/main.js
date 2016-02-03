@@ -187,7 +187,7 @@ function createPaperScript(element) {
 		consoleContainer = $('.console', element).orNull(),
 		editor,
 		session,
-		tools = $('.tools', element),
+		toolsContainer = $('.tools', element),
 		inspectorInfo = $('.toolbar .info', element),
 		source = $('.source', element),
 		scope,
@@ -771,14 +771,19 @@ function createPaperScript(element) {
 	}
 
 	function setupTools() {
-		$('.tool', tools).remove();
+		var activeClass = ($('.tool.active', toolsContainer).attr('class') || '')
+				.replace(/\b(button|tool|active)\b/g, '').trim(),
+			// Activate first tool by default, so it gets highlighted too
+			activeTool = paper.tools[0];
+		$('.tool', toolsContainer).remove();
 		for (var i = paper.tools.length - 1; i >= 0; i--) {
 			// Use an iteration closure so we have private variables.
 			(function(tool) {
 				var title = tool.buttonTitle || '',
 					button = $('<a class="button tool">' + title + '</a>')
-						.prependTo(tools);
-				button.addClass(tool.buttonClass || 'icon-pencil');
+						.prependTo(toolsContainer),
+					buttonClass = tool.buttonClass || 'icon-pencil';
+				button.addClass(buttonClass);
 				button.click(function() {
 					tool.activate();
 				}).mousedown(function() {
@@ -792,12 +797,15 @@ function createPaperScript(element) {
 						button.removeClass('active');
 					}
 				});
+				console.log(buttonClass, activeClass, buttonClass === activeClass)
+				if (activeClass && buttonClass === activeClass) {
+					activeTool = tool;
+					activeClass = null;
+				}
 			})(paper.tools[i]);
 		}
-		// Activate first tool now, so it gets highlighted too
-		var tool = paper.tools[0];
-		if (tool)
-			tool.activate();
+		if (activeTool)
+			activeTool.activate();
 	}
 
 	var panes = element.findAndSelf('.split-pane');
