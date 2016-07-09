@@ -10,12 +10,12 @@
     "bower_components"
   ],
   "dependencies": {
-    "paper": "https://github.com/paperjs/paper.js.git#acd9f86c8431b289633680acfce3e8cab27d65d6",
-    "palette": "~0.0.4",
-    "jquery": "~2.1.4",
-    "ace-builds": "~1.1.9",
-    "jszip-mirror": "~2.4.0",
-    "base64": "~0.3.0",
+    "paper": "^0.10.1",
+    "palette": "^0.0.5",
+    "jquery": "^2.2.4",
+    "ace-builds": "^1.2.3",
+    "jszip-mirror": "^2.4.0",
+    "base64": "^1.0.0",
     "spectrum": "~1.7.0"
   }
 }
