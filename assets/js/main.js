@@ -453,7 +453,8 @@ function createPaperScript(element) {
 		var code = preprocessCode(script.code, script.breakpoints);
 		scope.execute(code, {
 			url: url,
-			source: script.code
+			source: script.code,
+            sourceMaps: 'inline'
 		});
 		createInspector();
 		setupTools();
