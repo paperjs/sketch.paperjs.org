@@ -10,10 +10,10 @@
     "bower_components"
   ],
   "dependencies": {
-    "paper": "^0.10.1",
+    "paper": "^0.10.3",
     "palette": "^0.0.5",
     "jquery": "^2.2.4",
-    "ace-builds": "^1.2.3",
+    "ace-builds": "^1.2.6",
     "jszip-mirror": "^2.4.0",
     "base64": "^1.0.0",
     "spectrum": "~1.7.0"
