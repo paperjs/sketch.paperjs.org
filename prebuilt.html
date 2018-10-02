@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Paper.js Sketch</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/fontello/css/fontello.css">
+<link rel="stylesheet" href="assets/css/spectrum.css">
+<script src="node_modules/acorn/dist/acorn.js"></script>
+<script src="https://rawgit.com/paperjs/paper.js/prebuilt/module/dist/paper-full.js"></script>
+<script src="node_modules/palette.js/palette.js"></script>
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/ace-builds/src-min/ace.js"></script>
+<script src="node_modules/Base64/base64.js"></script>
+<script src="assets/js/jquery_splitter.js"></script>
+<script src="assets/js/spectrum.js"></script>
+<script src="assets/js/rawinflate.js"></script>
+<script src="assets/js/rawdeflate.js"></script>
+<script src="assets/js/main.js"></script>
+</head>
+<body>
+<div class="paperscript split split-pane" data-orientation="hor" data-percentage="40%">
+    <div class="split-pane" data-orientation="ver" data-percentage="70%">
+        <div class="source gui-context">
+            <div class="gui">
+                <a class="button script-run icon-play" title="Run"></a>
+                <a class="button script-download icon-file-text" target="_blank" title="Download"></a>
+            </div>
+            <div class="editor"></div>
+        </div>
+        <div class="console gui-context">
+            <div class="gui">
+                <a class="button console-clear icon-trash" title="Clear"></a>
+            </div>
+        </div>
+    </div>
+    <div class="canvas gui-context">
+        <div class="gui toolbar">
+            <div class="tools">
+                <a class="button canvas-export-svg icon-file-pdf" target="_blank" title="Export SVG"></a>
+                <a class="button canvas-export-json icon-file-markup" target="_blank" title="Export JSON"></a>
+                <a class="button canvas-clear icon-trash" title="Clear Canvas"></a>
+            </div>
+            <div class="clear"></div>
+            <div class="palettejs-root"></div>
+            <div class="clear"></div>
+            <div class="info hidden"></div>
+        </div>
+        <canvas id="canvas"></canvas>
+    </div>
+</div>
