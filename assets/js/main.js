@@ -124,7 +124,7 @@ function getBlobURL(content, type) {
 function getTimeStamp() {
 	var parts = new Date().toJSON().toString().replace(/[-:]/g, '').match(
 			/^20(.*)T(.*)\.\d*Z$/);
-	return parts[1] + '_' + parts[2]; 
+	return parts[1] + '_' + parts[2];
 }
 
 function updateHash() {
@@ -159,7 +159,7 @@ if (window.location.hash) {
 	if (error) {
 		alert('That shared link format is not supported.');
 	}
-} 
+}
 if (!script.code) {
 	// Support only one script for now, named 'Untitled'. Later on we'll have
 	// a document switcher.
@@ -251,8 +251,8 @@ function createPaperScript(element) {
 		}
 	});
 
-	editor.on('guttermousedown', function(event) { 
-	    var target = $(event.domEvent.target); 
+	editor.on('guttermousedown', function(event) {
+	    var target = $(event.domEvent.target);
 	    if (!target.hasClass('ace_gutter-cell'))
 	        return;
 	    session.setBreakpoint(event.getDocumentPosition().row,
@@ -323,7 +323,7 @@ function createPaperScript(element) {
 	function filterAnnotations(annotations) {
 		for (var i = annotations.length - 1; i >= 0; i--) {
 			var text = annotations[i].text;
-			if (/^Use '[=!]=='/.test(text) 
+			if (/^Use '[=!]=='/.test(text)
 					|| /is already defined/.test(text)
 					|| /Redefinition of/.test(text)
 					|| /Missing semicolon/.test(text)
@@ -573,10 +573,10 @@ function createPaperScript(element) {
 			lineNumber = match[2];
 		}
 		if (lineNumber) {
-			var annotation = { 
-				row: lineNumber - 1, 
-				column: columNumber, 
-				text: error, 
+			var annotation = {
+				row: lineNumber - 1,
+				column: columNumber,
+				text: error,
 				type: 'error'
 			};
 			var annotations = getAnnotations();
@@ -590,7 +590,7 @@ function createPaperScript(element) {
 	};
 
 	function extendScope() {
-		scope.Http = { 
+		scope.Http = {
 			request: function(options) {
 				var url = options.url,
 					nop = function() {};
@@ -625,7 +625,7 @@ function createPaperScript(element) {
 		scope.include = function(url) {
 		};
 
-		// Load all includes sequentially, and finally evaluate code, since 
+		// Load all includes sequentially, and finally evaluate code, since
 		// the code will probably be interdependent.
 		function load() {
 			var path = includes.shift();
