@@ -1,3 +1,59 @@
+
+(function() {
+	var PAPERJS_VERSIONS = [
+		'prebuilt',
+		'0.11.5',
+		'0.11.4',
+		'0.11.3',
+		'0.11.2',
+		'0.11.1',
+		'0.11.0',
+		'0.10.4',
+		'0.10.3',
+		'0.10.2',
+		'0.9.25',
+		'0.9.24',
+		'0.9.23',
+		'0.9.22',
+		'0.9.21',
+		'0.9.20',
+		'0.9.19',
+		'0.9.18',
+		'0.9.17',
+		'0.9.16',
+		'0.9.15',
+		'0.9.14',
+		'0.9.13',
+		'0.9.12',
+		'0.9.11',
+		'0.9.10',
+		'0.9.9',
+		'0.9.8',
+		'0.9.6',
+		'0.9.5'
+	];
+	var paperjs_version = PAPERJS_VERSIONS[1];
+	if (location.hash) {
+		var paperjs_version_reg = /^V\/(prebuilt|[\d\.]+)\/?/;
+		var tmp = paperjs_version_reg.exec(location.hash.slice(1));
+		if (tmp) tmp = tmp[1];
+		if (PAPERJS_VERSIONS.indexOf(tmp) !== -1) {
+			paperjs_version = tmp;
+		}
+	}
+
+	var scriptEle = document.createElement('script');
+	scriptEle.type = 'text/javascript';
+	var url;
+	if(PAPERJS_VERSIONS.indexOf(paperjs_version) === 0) {
+		url = 'https://rawgit.com/paperjs/paper.js/prebuilt/module/dist/paper-full.js';
+	} else {
+		url = 'https://cdnjs.cloudflare.com/ajax/libs/paper.js/' + paperjs_version + '/paper-full.js'
+	}
+	document.head.appendChild(scriptEle);
+	scriptEle.src = url;
+	$(scriptEle).on('load',
+
 (function() {
 // Settings
 
@@ -128,11 +184,16 @@ function getTimeStamp() {
 }
 
 function updateHash() {
-	window.location.hash = '#S/' + encode(JSON.stringify(script));
+	window.location.hash = '#V/' + $('.script-version').val() + '/S/' + encode(JSON.stringify(script));
 }
+var scriptSelectHtml = '';
+for (var i = 0; i < PAPERJS_VERSIONS.length; ++i) {
+	scriptSelectHtml += '<option value="' + PAPERJS_VERSIONS[i] + '">' + PAPERJS_VERSIONS[i] + '</option>';
+}
+$('.script-version').html(scriptSelectHtml).val(paperjs_version);
 
 if (window.location.hash) {
-	var hash = window.location.hash.substr(1),
+	var hash = window.location.hash.substr(1).replace(paperjs_version_reg, ''),
 		version = hash.substr(0, 2),
 		string = hash.substr(2),
 		error = true;
@@ -838,8 +899,12 @@ function createPaperScript(element) {
 	if (window.location.search != '?fix')
 		$(window).load(runCode);
 
+	$('.script-version').on('change', function(){
+		updateHash();
+		location.reload();
+	});
 	$('.button', element).mousedown(function() {
-		return false;
+		if(this.tagName !== 'SELECT') return false;
 	});
 
 	runButton.click(function() {
@@ -883,4 +948,4 @@ $(function() {
 	createPaperScript($('.paperscript'));
 });
 
-})();
+}))})();
