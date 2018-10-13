@@ -425,7 +425,11 @@ function createPaperScript(element) {
 			}
 		}
 
-		walkAST(PaperScript.parse(code, { ranges: true, locations: true }));
+		walkAST(PaperScript.parse(code, {
+			ranges: true,
+			locations: true,
+			sourceType: 'module'
+		}));
 
 		if (breakpoints.length > 0) {
 			var lines = code.split(/\r\n|\n|\r/mg);
