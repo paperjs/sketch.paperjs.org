@@ -105,6 +105,10 @@ img {
 		right: 0;
 		z-index: 100;
 		display: none;
+
+		&.panels {
+			bottom: 10px;
+		}
 	}
 
 	.gui-context:hover .gui {
@@ -203,7 +207,7 @@ img {
 
 	// Editor
 
-	.ace_editor { 
+	.ace_editor {
 		position: absolute;
 		top: 0;
 		right: 0;
@@ -235,7 +239,7 @@ img {
 			border-radius: 5px;
 			background: #f30;
 			box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
-		} 
+		}
 	}
 
 	// Fonts
@@ -290,7 +294,7 @@ img {
 
 	&.zoom-grab {
 		cursor: url('assets/grabbing.cur');
-		cursor: -moz-grabbing; 
+		cursor: -moz-grabbing;
 		cursor: -webkit-grabbing;
 		cursor: grabbing;
 	}
@@ -358,6 +362,21 @@ img {
 
 	.right_panel {
 		right: 0;
+	}
+}
+
+// Layers Panel
+
+paperjs-layer-panel {
+	position: fixed;
+	bottom: 9px;
+	right: 9px;
+	display: flex;
+	z-index: 999;
+
+	section {
+		max-height: 500px;
+		overflow: auto;
 	}
 }
 
