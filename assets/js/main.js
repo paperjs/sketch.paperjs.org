@@ -192,7 +192,10 @@ function createPaperScript(element) {
 		source = $('.source', element),
 		scope,
 		customAnnotations = [],
-		ignoreAnnotation = false;
+		ignoreAnnotation = false,
+    	layersPanel,
+        layersPanelLoading,
+        layersPanelLoaded;
 
 	editor = ace.edit(source.find('.editor')[0]);
 	editor.$blockScrolling = Infinity;
@@ -462,6 +465,9 @@ function createPaperScript(element) {
 		});
 		createInspector();
 		setupTools();
+		if (layersPanel) {
+			layersPanel.project = scope.project;
+		}
 	}
 
 	function runCode() {
@@ -562,6 +568,49 @@ function createPaperScript(element) {
 	function clearConsole() {
 		if (scope.console)
 			scope.console.clear();
+	}
+
+	function openLayersPanel() {
+		// If plugin is not loaded yet, load it.
+		if (!layersPanelLoaded) {
+            loadLayersPanel(openLayersPanel);
+			return;
+		}
+		// Make sure at most one panel is opened at a time.
+		if (layersPanel) {
+			return;
+		}
+        paperjsLayersPanel.create({
+            project  : scope.project,
+            draggable: false,
+            resizable: false,
+            items    : {expanded: true},
+            onClose  : function () {layersPanel = null;},
+            callback : function (instance) {layersPanel = instance;}
+        });
+	}
+
+	function loadLayersPanel(callback) {
+		// Make sure plugin is not already loading.
+		if (layersPanelLoading) {
+			return;
+		}
+        layersPanelLoading = true;
+        var script = document.createElement('script');
+        script.src = 'https://sasensi.github.io/paperjs-layers-panel/build/' +
+			'paperjs-layers-panel.js';
+        script.addEventListener('load', function() {
+        	// Check if plugin loaded successfully.
+			if (typeof paperjsLayersPanel !== 'undefined') {
+				layersPanelLoaded = true;
+				callback();
+			} else {
+                scope.console.warn('Paperjs Layers Panel loading failed. This ' +
+					'feature is only available, in most recents browsers.');
+                $('.button.layers-panel', element).remove();
+			}
+		});
+        document.getElementsByTagName('body')[0].appendChild(script);
 	}
 
 	// Install an error handler to log the errors in our log too:
@@ -879,6 +928,10 @@ function createPaperScript(element) {
 	$('.button.console-clear', element).click(function() {
 		clearConsole();
 	});
+
+    $('.button.layers-panel', element).click(function() {
+        openLayersPanel();
+    });
 }
 
 $(function() {
