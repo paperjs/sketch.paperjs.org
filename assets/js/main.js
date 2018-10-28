@@ -135,13 +135,21 @@ $(scriptEle).on('load', function() {
 	var versionOptions = VERSIONS.map(function(version) {
 		return '<option value="' + version + '">' + version + '</option>'
 	})
+
 	$('.script-version')
 		.html(versionOptions.join(''))
 		.val(paperVersion)
 		.on('change', function() {
 			updateHash();
 			window.location.reload();
-		});
+		})
+		// Firefox select fix:
+		.on('focus', function() {
+			$('body').addClass('select-focus')
+		})
+		.on('blur', function() {
+			$('body').removeClass('select-focus')
+		})
 
 	// Settings
 
@@ -885,9 +893,7 @@ $(scriptEle).on('load', function() {
 			$(window).load(runCode);
 
 		$('.button', element).mousedown(function() {
-			if (this.tagName !== 'SELECT') {
-				return false;
-			}
+			return false;
 		});
 
 		runButton.click(function() {

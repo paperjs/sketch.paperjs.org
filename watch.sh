@@ -1,2 +1,2 @@
 #!/bin/sh
-sass --sourcemap=none --watch assets/css/style.scss:assets/css/style.css
+sass --no-source-map --watch assets/css/style.scss:assets/css/style.css

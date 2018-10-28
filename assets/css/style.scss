@@ -24,8 +24,8 @@ body {
 	color: #000;
 	overflow: hidden;
 	// Use normal aliasing to make it appear less heavy
-	-moz-osx-font-smoothing: grayscale;
 	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 	font-smoothing: antialiased;
 }
 
@@ -35,6 +35,32 @@ textarea {
 	font-size: 11px;
 	margin: 0;
 	color: #000;
+}
+
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+    -webkit-box-sizing:content-box;
+    -moz-box-sizing: content-box;
+	box-sizing:content-box;
+
+	&:focus {
+		outline: none;
+	}
+	// IE hack:
+	&::-ms-expand { 
+		display: none; // remove default arrow on ie10 and ie11
+	}
+	// Firefox hack:
+	&:-moz-focusring {
+		color: transparent;
+		text-shadow: 0 0 0 #000;
+	}
+
+	option:not(:checked) {
+	  color: black; // prevent <option> from becoming transparent as well
+	}
 }
 
 a {
@@ -104,14 +130,24 @@ img {
 		position: absolute;
 		right: 0;
 		z-index: 100;
-		display: none;
+		// display: none;
 	}
 
-	.gui-context:hover .gui {
-		display: block;
+	.gui-context {
+		&:hover .gui {
+			display: block;
+		}
+
+		// Needed for Firefox select to stay visible when open
+		@supports (-moz-appearance:none) {
+			.select-focus & .gui {
+				display: block;
+			}
+		}
 	}
 
 	.button,
+	.select,
 	.info,
 	.palettejs-palette {
 		font-size: 11px;
@@ -123,11 +159,36 @@ img {
 		float: right;
 	}
 
-	.button {
+	.button,
+	.select {
 		float: left;
-		font-size: 14px;
 		line-height: 18px;
+		height: 18px; // For .select
 		border: 0;
+		cursor: pointer;
+
+		&:hover {
+			background-color: #ddd;
+		}
+
+		&.active {
+			background-color: #bbb;
+		}
+	}
+
+	.button {
+		font-size: 14px;
+	}
+
+	.select {
+		padding-right: 12px;
+		@include background-image(
+			linear-gradient(45deg, transparent 50%, #000 50%),
+			linear-gradient(135deg, #000 50%, transparent 50%)
+		);
+		background-position: calc(100% - 10px) 0.8em, calc(100% - 5px) 0.8em;
+		background-size: 5px 5px;
+		background-repeat: no-repeat;
 	}
 
 	.tools {
@@ -135,18 +196,6 @@ img {
 
 		.button {
 			float: left;
-		}
-	}
-
-	.button {
-		cursor: pointer;
-
-		&:hover {
-			background: #ddd;
-		}
-
-		&.active {
-			background: #bbb;
 		}
 	}
 
