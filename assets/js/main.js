@@ -781,14 +781,14 @@ function createPaperScript(element) {
 		}).on({
 			mousedown: function(event) {
 				if (event.modifiers.space) {
-					lastPoint = paper.view.projectToView(event.point);
+					lastPoint = scope.view.projectToView(event.point);
 					return;
 				}
 				var factor = 1.25;
 				if (event.modifiers.alt)
 					factor = 1 / factor;
-				paper.view.zoom *= factor;
-				paper.view.center = event.point;
+				scope.view.zoom *= factor;
+				scope.view.center = event.point;
 			},
 			keydown: function(event) {
 				if (event.key === 'alt') {
@@ -811,9 +811,9 @@ function createPaperScript(element) {
 					// dragging, we need to convert coordinates to view space,
 					// and then back to project space after the view space has
 					// changed.
-					var point = paper.view.projectToView(event.point),
-						last = paper.view.viewToProject(lastPoint);
-					paper.view.scrollBy(last.subtract(event.point));
+					var point = scope.view.projectToView(event.point),
+						last = scope.view.viewToProject(lastPoint);
+					scope.view.scrollBy(last.subtract(event.point));
 					lastPoint = point;
 				}
 			},
@@ -832,10 +832,11 @@ function createPaperScript(element) {
 	function setupTools() {
 		var activeClass = ($('.tool.active', toolsContainer).attr('class') || '')
 				.replace(/\b(button|tool|active)\b/g, '').trim(),
+			tools = scope.tools,
 			// Activate first tool by default, so it gets highlighted too
-			activeTool = paper.tools[0];
+			activeTool = tools[0];
 		$('.tool', toolsContainer).remove();
-		for (var i = paper.tools.length - 1; i >= 0; i--) {
+		for (var i = tools.length - 1; i >= 0; i--) {
 			// Use an iteration closure so we have private variables.
 			(function(tool) {
 				var title = tool.buttonTitle || '',
@@ -860,7 +861,7 @@ function createPaperScript(element) {
 					activeTool = tool;
 					activeClass = null;
 				}
-			})(paper.tools[i]);
+			})(tools[i]);
 		}
 		if (activeTool)
 			activeTool.activate();
@@ -934,7 +935,7 @@ function createPaperScript(element) {
 	});
 
 	$('.button.canvas-clear', element).click(function() {
-		if (!paper.project.isEmpty() && confirm(
+		if (!scope.project.isEmpty() && confirm(
 				'This clears the whole canvas.\nAre you sure to proceed?')) {
 			scope.project.clear();
 			new Layer();
