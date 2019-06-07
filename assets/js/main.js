@@ -2,6 +2,8 @@
 (function() {
 var VERSIONS = [
 	'prebuilt',
+	'0.12.1',
+	'0.12.0',
 	'0.11.8',
 	'0.11.5',
 	'0.11.4',
@@ -18,6 +20,15 @@ var VERSIONS = [
 	'0.9.22',
 	'0.9.21'
 ];
+
+var SOURCES = {
+	prebuilt: 'https://rawgit.com/paperjs/paper.js/prebuilt/module/dist/paper-full.js'
+}
+
+if (document.location.hostname === 'localhost') {
+	VERSIONS.unshift('local');
+	SOURCES.local = '../paper.js/dist/paper-full.js';
+}
 
 /*
 // URL Encoding
@@ -79,7 +90,7 @@ var paperVersion = VERSIONS[1]; // the default.
 var hash = window.location.hash;
 if (hash) {
 	var match = hash.match(
-		/^#(?:V\/(prebuilt|[\d\.]+)\/S\/(.*)|[SZ]\/(.*)|T\/(.*))$/
+		/^#(?:V\/(prebuilt|local|[\d\.]+)\/S\/(.*)|[SZ]\/(.*)|T\/(.*))$/
 	);
 	var error = false;
 	try {
@@ -123,15 +134,12 @@ if (!script.name || script.name == 'First Script')
 var scripts = [];
 scripts.push(script);
 
-var scriptEle = document.createElement('script');
-scriptEle.type = 'text/javascript';
-scriptEle.src = paperVersion === 'prebuilt'
-	? 'https://rawgit.com/paperjs/paper.js/prebuilt/module/dist/paper-full.js'
-	: 'https://cdnjs.cloudflare.com/ajax/libs/paper.js/' + paperVersion + '/paper-full.js'
-document.head.appendChild(scriptEle);
-$(scriptEle).on('load', function() {
-	// Code executed when specific paper.js version is loaded:
+var src = SOURCES[paperVersion] ||
+	'https://cdnjs.cloudflare.com/ajax/libs/paper.js/' + paperVersion + '/paper-full.js';
 
+document.write('<script type="text/javascript" src="' + src + '"></script>');
+
+$(function() {
 	var versionOptions = VERSIONS.map(function(version) {
 		return '<option value="' + version + '">' + version + '</option>'
 	})
@@ -507,7 +515,7 @@ $(scriptEle).on('load', function() {
 			scope.execute(code, {
 				url: url,
 				source: script.code,
-							sourceMaps: 'inline'
+				sourceMaps: 'inline'
 			});
 			createInspector();
 			setupTools();
