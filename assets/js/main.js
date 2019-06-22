@@ -137,7 +137,7 @@ var scripts = [];
 scripts.push(script);
 
 var src = SOURCES[paperVersion] ||
-	'https://cdnjs.cloudflare.com/ajax/libs/paper.js/' + paperVersion + '/paper-full.js';
+	'https://unpkg.com/paper@' + paperVersion + '/dist/paper-full.js';
 
 document.write('<script type="text/javascript" src="' + src + '"></script>');
 
