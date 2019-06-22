@@ -273,18 +273,20 @@ $(function() {
 		});
 
 		// Pinch-to-zoom
-		canvas.on('wheel', function(event) {
-			var e = event.originalEvent,
-				view = scope.view,
-				offset = canvas.offset(),
-				point = view.viewToProject(
-					DomEvent.getPoint(e).subtract(offset.left, offset.top)
-				), 
-				delta = e.deltaY || 0,
-				scale = 1 - delta / 100;
-			view.scale(scale, point);
-			return false;
-		});
+		if (paper.DomEvent) {
+			canvas.on('wheel', function(event) {
+				var e = event.originalEvent,
+					view = scope.view,
+					offset = canvas.offset(),
+					point = view.viewToProject(
+						paper.DomEvent.getPoint(e).subtract(offset.left, offset.top)
+					), 
+					delta = e.deltaY || 0,
+					scale = 1 - delta / 100;
+				view.scale(scale, point);
+				return false;
+			});
+		}
 
 		editor.commands.addCommands([{
 			name: 'execute',
@@ -296,7 +298,7 @@ $(function() {
 				$('.button.script-run').trigger('click');
 			}
 		}, {
-			// Dispable settings menu
+			// Disable settings menu
 			name: 'showSettingsMenu',
 			bindKey: {
 				mac: 'Command-,',
