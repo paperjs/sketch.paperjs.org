@@ -268,8 +268,22 @@ $(function() {
 
 		// Blur the editor when clicking inside the canvas, to avoid accidentally
 		// erasing code when working with the keyboard.
-		canvas.on('mousedown', function(event) {
+		canvas.on('mousedown', function() {
 			editor.blur();
+		});
+
+		// Pinch-to-zoom
+		canvas.on('wheel', function(event) {
+			var e = event.originalEvent,
+				view = scope.view,
+				offset = canvas.offset(),
+				point = view.viewToProject(
+					DomEvent.getPoint(e).subtract(offset.left, offset.top)
+				), 
+				delta = e.deltaY || 0,
+				scale = 1 - delta / 100;
+			view.scale(scale, point);
+			return false;
 		});
 
 		editor.commands.addCommands([{
@@ -778,15 +792,16 @@ $(function() {
 				buttonClass: 'icon-zoom'
 			}).on({
 				mousedown: function(event) {
+					var view = scope.view;
 					if (event.modifiers.space) {
-						lastPoint = scope.view.projectToView(event.point);
+						lastPoint = view.projectToView(event.point);
 						return;
 					}
 					var factor = 1.25;
 					if (event.modifiers.alt)
 						factor = 1 / factor;
-					scope.view.zoom *= factor;
-					scope.view.center = event.point;
+					view.zoom *= factor;
+					view.center = event.point;
 				},
 				keydown: function(event) {
 					if (event.key === 'alt') {
@@ -809,9 +824,10 @@ $(function() {
 						// dragging, we need to convert coordinates to view space,
 						// and then back to project space after the view space has
 						// changed.
-						var point = scope.view.projectToView(event.point),
-							last = scope.view.viewToProject(lastPoint);
-						scope.view.scrollBy(last.subtract(event.point));
+						var view = scope.view,
+							point = view.projectToView(event.point),
+							last = view.viewToProject(lastPoint);
+						view.scrollBy(last.subtract(event.point));
 						lastPoint = point;
 					}
 				},
@@ -883,9 +899,10 @@ $(function() {
 		});
 
 		canvas.parents('.split-pane').on('splitter.resize', function() {
-			var pane = $('.canvas', element);
-			if (scope && scope.view) {
-				scope.view.setViewSize(pane.width(), pane.height());
+			var pane = $('.canvas', element),
+				view = scope && scope.view;
+			if (view) {
+				view.setViewSize(pane.width(), pane.height());
 			}
 		});
 
