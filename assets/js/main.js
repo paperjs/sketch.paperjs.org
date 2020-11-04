@@ -2,6 +2,9 @@
 (function() {
 var VERSIONS = [
 	'prebuilt',
+	'0.12.11',
+	'0.12.9',
+	'0.12.8',
 	'0.12.7',
 	'0.12.4',
 	'0.12.3',
@@ -282,7 +285,7 @@ $(function() {
 					offset = canvas.offset(),
 					point = view.viewToProject(
 						paper.DomEvent.getPoint(e).subtract(offset.left, offset.top)
-					), 
+					),
 					delta = e.deltaY || 0,
 					scale = 1 - delta / 100;
 				view.scale(scale, point);
