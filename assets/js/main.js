@@ -939,7 +939,10 @@ $(function() {
 		});
 
 		$('.button.canvas-export-svg', element).click(function() {
-			var svg = scope.project.exportSVG({ asString: true });
+			var svg = scope.project.exportSVG({
+				asString: true,
+				reduceAttributes: false
+			});
 			this.href = getBlobURL(svg, 'image/svg+xml');
 			this.download = 'Export_' + getTimeStamp() + '.svg';
 		});
