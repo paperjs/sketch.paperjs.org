@@ -148,9 +148,22 @@ scripts.push(script);
 var src = SOURCES[paperVersion] ||
 	'https://unpkg.com/paper@' + paperVersion + '/dist/paper-full.js';
 
-document.write('<script type="text/javascript" src="' + src + '"></script>');
+if (paperVersion === 'local') {
+	// load.js loads its files with document.write(), until paper.js 1.0 is ESM.
+	document.write('<script type="text/javascript" src="' + src + '"></script>');
+	$(setup);
+} else {
+	// Avoid a parser-blocking document.write(), and set up the sketch once both
+	// paper.js and the DOM are ready.
+	var scriptElement = document.createElement('script');
+	scriptElement.src = src;
+	scriptElement.onload = function() {
+		$(setup);
+	};
+	document.head.appendChild(scriptElement);
+}
 
-$(function() {
+function setup() {
 	var versionOptions = VERSIONS.map(function(version) {
 		return '<option value="' + version + '">' + version + '</option>'
 	})
@@ -977,5 +990,5 @@ $(function() {
 			$('body').addClass('large');
 		createPaperScript($('.paperscript'));
 	});
-})
+}
 })();
