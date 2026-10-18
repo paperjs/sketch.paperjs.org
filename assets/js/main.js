@@ -33,7 +33,7 @@ var VERSIONS = [
 ];
 
 var SOURCES = {
-	prebuilt: 'https://rawgit.com/paperjs/paper.js/prebuilt/module/dist/paper-full.js'
+	prebuilt: 'https://cdn.jsdelivr.net/gh/paperjs/paper.js@prebuilt/module/dist/paper-full.js'
 }
 
 if (document.location.hostname === 'localhost') {
