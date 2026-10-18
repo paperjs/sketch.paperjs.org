@@ -1,0 +1,53 @@
+name: Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deployment finish, but skip queued ones that are outdated:
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci
+      # Publish only the parts of node_modules that index.html loads. Ace loads
+      # its modes and workers relative to ace.js, so src-min goes as a whole:
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp -R index.html assets _site/
+          cp -R --parents \
+            node_modules/acorn/dist \
+            node_modules/palette.js/palette.js \
+            node_modules/jquery/dist \
+            node_modules/ace-builds/src-min \
+            node_modules/Base64/base64.js \
+            _site/
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
