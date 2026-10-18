@@ -75,6 +75,10 @@ function getScriptId(script) {
 	return script.name + '.sketch.paperjs.org';
 }
 
+// Set while a script runs, until its first frame is drawn. If it is still set
+// on load, the script hung the page and should not run again straight away:
+var runningKey = 'running.sketch.paperjs.org';
+
 function getBlobURL(content, type) {
 	return URL.createObjectURL(new Blob([content], {
 		type: type
@@ -549,11 +553,20 @@ function setup() {
 				baseUrl = loc.protocol + '//' + loc.host + loc.pathname;
 				url = /*baseUrl +*/ script.name + '_' + getTimeStamp() + '.js';
 			var code = preprocessCode(script.code, script.breakpoints);
-			scope.execute(code, {
-				url: url,
-				source: script.code,
-				sourceMaps: 'inline'
-			});
+			localStorage[runningKey] = true;
+			try {
+				scope.execute(code, {
+					url: url,
+					source: script.code,
+					sourceMaps: 'inline'
+				});
+			} finally {
+				// Requested after the script's own first frame, so this only
+				// runs if that frame finishes too:
+				requestAnimationFrame(function() {
+					delete localStorage[runningKey];
+				});
+			}
 			createInspector();
 			setupTools();
 		}
@@ -936,9 +949,15 @@ function setup() {
 				panes.trigger('splitter.resize');
 		}).trigger('resize');
 
-		// Run the script once the window is loaded
-		if (window.location.search != '?fix')
+		// Run the script once the window is loaded, unless it hung the page
+		// the last time it ran, or ?fix asks to fix it first.
+		if (localStorage[runningKey]) {
+			delete localStorage[runningKey];
+			alert('The script did not finish the last time it ran, so it was '
+					+ 'not run again. Fix it, then press Run.');
+		} else if (window.location.search != '?fix') {
 			$(window).load(runCode);
+		}
 
 		$('.button', element).mousedown(function() {
 			return false;
