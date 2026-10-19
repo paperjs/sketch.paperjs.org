@@ -2,6 +2,7 @@
 (function() {
 var VERSIONS = [
 	'prebuilt',
+	'0.13.0',
 	'0.12.20',
 	'0.12.18',
 	'0.12.17',
