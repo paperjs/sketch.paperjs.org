@@ -648,6 +648,23 @@ function setup() {
 				consoleContainer.scrollTop(consoleContainer.prop('scrollHeight'));
 			}
 
+			// Measure times ourselves, to show them like the real console does:
+			var timers = {};
+
+			function printTime(label, data, end) {
+				label = label || 'default';
+				var start = timers[label];
+				if (start != null) {
+					print('log', [label + ': '
+							+ (performance.now() - start).toFixed(3) + ' ms']
+							.concat(data));
+					if (end)
+						delete timers[label];
+				} else {
+					print('warn', ['Timer \'' + label + '\' does not exist']);
+				}
+			}
+
 			scope.console = {
 				log: function() {
 					print('log', arguments);
@@ -661,10 +678,29 @@ function setup() {
 					print('warn', arguments);
 				},
 
+				time: function(label) {
+					timers[label || 'default'] = performance.now();
+				},
+
+				timeLog: function(label) {
+					printTime(label, [].slice.call(arguments, 1));
+				},
+
+				timeEnd: function(label) {
+					printTime(label, [], true);
+				},
+
 				clear: function() {
 					consoleContainer.children().remove();
 				}
 			};
+			// Inherit the methods that we don't show, such as info(), from the
+			// real console:
+			Object.setPrototypeOf(scope.console, realConsole);
+			// Use it as the page's console, so scripts, their handlers and the
+			// libraries they include all log to it, also with Paper.js 0.14.0,
+			// which doesn't pass the scope's console to scripts:
+			window.console = scope.console;
 		}
 
 		function clearConsole() {
@@ -743,15 +779,11 @@ function setup() {
 				var path = includes.shift();
 				if (path) {
 					var url = /^\/lib\//.test(path) ? path.substring(1) : path;
-					// Switch to the editor console globally so loaded libraries use
-					// our own console too:
-					window.console = scope.console;
 					$.getScript(url, load).fail(function(xhr, error) {
 						scope.console.error('Cannot load ' + path + ': ' + error);
 					});
 				} else {
 					evaluateCode();
-					window.console = realConsole;
 				}
 			}
 			load();
